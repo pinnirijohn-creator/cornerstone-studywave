@@ -1588,7 +1588,7 @@ function buildConfirmationPdf(record, opts){
   doc.setFont('times','italic');
   doc.setFontSize(8);
   const footerNote = doc.splitTextToSize(
-    'To be completed and signed by the candidate\u2019s Principal or Vice Principal, and submitted to the Registrar.', 110);
+    'To be completed and signed by the candidate\u2019s Principal or Vice Principal, and submitted to the Registrar.', 130);
   doc.text(footerNote, 190, 276, {align:'right'});
   doc.setTextColor(0);
 
