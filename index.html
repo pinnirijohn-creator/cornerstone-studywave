@@ -1733,15 +1733,8 @@ function buildConfirmationPdf(record, opts){
   doc.setFontSize(7);
   doc.setTextColor(110);
   doc.text('Scan for candidate details', 29, 288, {align:'center'});
-  doc.setFont('times','italic');
-  doc.setFontSize(8);
-  doc.setTextColor(120);
-  const footerNote3 = doc.splitTextToSize(
-    'To be completed and signed by the candidate\u2019s Parent/Guardian, and submitted to the Registrar.', 110);
-  doc.text(footerNote3, 190, 258, {align:'right'});
-  doc.setTextColor(0);
 
-  let ySig = 270;
+  let ySig = 258;
   doc.setLineWidth(0.3);
   doc.line(112, ySig, 148, ySig);
   doc.line(154, ySig, 190, ySig);
@@ -1754,6 +1747,14 @@ function buildConfirmationPdf(record, opts){
   doc.setTextColor(0);
   doc.setFont('times','normal');
   doc.setFontSize(11);
+
+  doc.setFont('times','italic');
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  const footerNote3 = doc.splitTextToSize(
+    'To be completed and signed by the candidate\u2019s Parent/Guardian, and submitted to the Registrar.', 110);
+  doc.text(footerNote3, 190, 276, {align:'right'});
+  doc.setTextColor(0);
 
   if(opts && opts.returnBase64){
     return doc.output('datauristring').split(',')[1];
