@@ -1724,17 +1724,21 @@ function buildConfirmationPdf(record, opts){
   consentBullet(
     'Medical Emergency: In the event of an illness or injury, I authorize the event organizers to seek necessary first-aid or medical treatment for my child if I cannot be reached immediately.');
 
-  y2 += 8;
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(0,0,0);
-  doc.text('Parent/Guardian Signature:', 18, y2);
-  const sigLabelWidth = doc.getTextWidth('Parent/Guardian Signature:');
+  // ── Signature & Date — moved to the bottom-right of the page (freeing up
+  // space above for the consent content), styled like the Attestation
+  // Letter's signature block: blank line first, then a lowercase caption
+  // in brackets underneath. ──
+  let ySig = 226;
   doc.setLineWidth(0.3);
-  doc.line(18 + sigLabelWidth + 3, y2, 138, y2);
-  doc.text('Date:', 146, y2);
-  const dateLabelWidth = doc.getTextWidth('Date:');
-  doc.line(146 + dateLabelWidth + 3, y2, 190, y2);
+  doc.line(112, ySig, 148, ySig);
+  doc.line(154, ySig, 190, ySig);
+  ySig += 5;
+  doc.setFont('times','italic');
+  doc.setFontSize(8);
+  doc.setTextColor(120);
+  doc.text('(parent/guardian signature)', 130, ySig, {align:'center'});
+  doc.text('(date)', 172, ySig, {align:'center'});
+  doc.setTextColor(0);
   doc.setFont('times','normal');
   doc.setFontSize(11);
 
