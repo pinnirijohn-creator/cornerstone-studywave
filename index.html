@@ -527,6 +527,70 @@
   .btn-review:hover:not(:disabled){box-shadow:0 4px 14px rgba(26,51,112,0.35);transform:translateY(-1px);}
 
   /* ═══════════════════════════════════════════════════════════
+     REGISTRAR DASHBOARD (summary + CSV export)
+     ═══════════════════════════════════════════════════════════ */
+  .dash-wrap{margin-bottom:22px;}
+  .dash-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:14px;flex-wrap:wrap;gap:10px;
+  }
+  .dash-header h4{
+    font-family:'Fraunces',serif;color:var(--navy);margin:0;font-size:16px;
+  }
+  .dash-toggle{
+    background:transparent;color:var(--navy-2);border:1.5px solid var(--navy-2);
+    padding:6px 14px;font-size:11.5px;border-radius:var(--radius-sm);
+    cursor:pointer;transition:var(--transition);
+  }
+  .dash-toggle:hover{background:#EEF2FF;}
+  .stat-cards{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px;margin-bottom:16px;
+  }
+  .stat-card{
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-sm);
+    padding:12px 14px;text-align:center;box-shadow:var(--shadow-sm);
+  }
+  .stat-card .stat-num{
+    font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:var(--navy);line-height:1.1;
+  }
+  .stat-card .stat-label{
+    font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;
+  }
+  .stat-card.accepted .stat-num{color:var(--success);}
+  .stat-card.pending .stat-num{color:#976B00;}
+  .breakdown-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;margin-bottom:8px;
+  }
+  .breakdown-box{
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-sm);
+    padding:12px 14px;box-shadow:var(--shadow-sm);
+  }
+  .breakdown-box h5{
+    margin:0 0 8px;font-size:11px;color:var(--navy-2);text-transform:uppercase;
+    letter-spacing:.5px;font-weight:700;
+  }
+  .breakdown-row{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:12.5px;color:var(--ink);padding:4px 0;border-bottom:1px dashed #EDF0F7;
+    gap:10px;
+  }
+  .breakdown-row:last-child{border-bottom:none;}
+  .breakdown-row .bar-track{
+    flex:1;height:5px;background:#EEF1F7;border-radius:99px;overflow:hidden;margin:0 8px;
+  }
+  .breakdown-row .bar-fill{
+    height:100%;background:linear-gradient(90deg,var(--navy-2),var(--gold-2));border-radius:99px;
+  }
+  .breakdown-row .bd-count{font-weight:700;color:var(--navy);min-width:18px;text-align:right;}
+  .btn-csv{
+    background:linear-gradient(135deg,var(--gold-2),var(--gold-3));
+    color:var(--navy);box-shadow:0 2px 8px var(--gold-glow);
+  }
+  .btn-csv:hover:not(:disabled){box-shadow:0 4px 12px var(--gold-glow);transform:translateY(-1px);}
+
+  /* ═══════════════════════════════════════════════════════════
      REVIEW MODAL
   ═══════════════════════════════════════════════════════════ */
   .modal-overlay{
@@ -2133,6 +2197,8 @@ updateAdminLockUI();
 // the candidate registration form.
 let bulkAnswerSlipReady = false;
 let bulkAnswerSlipRecords = [];
+let currentAdminRecords = [];
+let dashboardVisible = true;
 
 function invalidateBulkAnswerSlip(){
   bulkAnswerSlipReady = false;
@@ -2242,6 +2308,150 @@ function escapeHtml(str){
   return String(str||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// ═══════════════════════════════════════════════════════════
+// REGISTRAR DASHBOARD — summary stats + CSV export
+// ═══════════════════════════════════════════════════════════
+
+// Escapes a single value for CSV: wraps in quotes and doubles inner quotes
+// whenever the value contains a comma, quote, or newline.
+function csvEscape(value){
+  const str = String(value === undefined || value === null ? '' : value);
+  if(/[",\n]/.test(str)){
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+// Triggers a browser download of `content` as a file named `filename`.
+function downloadTextFile(filename, content, mimeType){
+  const blob = new Blob([content], { type: mimeType || 'text/plain;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+const CSV_COLUMNS = [
+  { key: 'applicationId', label: 'Application ID' },
+  { key: 'surname', label: 'Surname' },
+  { key: 'firstName', label: 'First Name' },
+  { key: 'lastName', label: 'Last Name' },
+  { key: 'gender', label: 'Gender' },
+  { key: 'dob', label: 'Date of Birth' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'email', label: 'Email' },
+  { key: 'guardianName', label: 'Parent/Guardian Name' },
+  { key: 'guardianPhone', label: 'Parent/Guardian Phone' },
+  { key: 'address', label: 'Address' },
+  { key: 'school', label: 'School' },
+  { key: 'level', label: 'Level' },
+  { key: 'fieldOfStudy', label: 'Field of Study' },
+  { key: 'gradYear', label: 'Graduation Year' },
+  { key: 'submittedAt', label: 'Submitted At' },
+  { key: 'status', label: 'Status' }
+];
+
+function buildCsv(records){
+  const header = CSV_COLUMNS.map(c => csvEscape(c.label)).join(',');
+  const rows = records.map(r =>
+    CSV_COLUMNS.map(c => csvEscape(r[c.key])).join(',')
+  );
+  return [header, ...rows].join('\r\n');
+}
+
+function todayStamp(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function handleExportAcceptedCsv(){
+  const accepted = currentAdminRecords.filter(r => (r.status || 'pending') === 'accepted');
+  if(accepted.length === 0){
+    alert('No Accepted candidates to export yet.');
+    return;
+  }
+  downloadTextFile(`CQC-Accepted-Candidates-${todayStamp()}.csv`, buildCsv(accepted), 'text/csv;charset=utf-8;');
+}
+
+function handleExportAllCsv(){
+  if(currentAdminRecords.length === 0){
+    alert('No registrations to export yet.');
+    return;
+  }
+  downloadTextFile(`CQC-All-Registrations-${todayStamp()}.csv`, buildCsv(currentAdminRecords), 'text/csv;charset=utf-8;');
+}
+
+// Tallies records into counts by School, Field of Study, and Level, plus
+// overall totals. Breakdown lists are capped at the top 8 entries (sorted
+// by count, descending) so an unbounded number of distinct schools doesn't
+// blow out the dashboard — the CSV export remains the source of truth for
+// the full detail.
+function computeDashboardStats(records){
+  const total = records.length;
+  let accepted = 0, pending = 0;
+  const bySchool = {}, byField = {}, byLevel = {};
+
+  records.forEach(r=>{
+    if((r.status || 'pending') === 'accepted') accepted++; else pending++;
+    const school = String(r.school || 'Not specified').trim() || 'Not specified';
+    const field = String(r.fieldOfStudy || 'Not specified').trim() || 'Not specified';
+    const level = String(r.level || 'Not specified').trim() || 'Not specified';
+    bySchool[school] = (bySchool[school] || 0) + 1;
+    byField[field] = (byField[field] || 0) + 1;
+    byLevel[level] = (byLevel[level] || 0) + 1;
+  });
+
+  const toSortedList = (obj) =>
+    Object.entries(obj).sort((a,b)=> b[1]-a[1]).map(([label,count])=>({label,count}));
+
+  return {
+    total, accepted, pending,
+    bySchool: toSortedList(bySchool),
+    byField: toSortedList(byField),
+    byLevel: toSortedList(byLevel)
+  };
+}
+
+function renderBreakdownBox(title, entries, total, maxRows){
+  const shown = entries.slice(0, maxRows);
+  const remainder = entries.length - shown.length;
+  let rowsHtml = shown.map(e=>{
+    const pct = total > 0 ? Math.round((e.count/total)*100) : 0;
+    return `<div class="breakdown-row">
+      <span>${escapeHtml(e.label)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${pct}%"></span></span>
+      <span class="bd-count">${e.count}</span>
+    </div>`;
+  }).join('');
+  if(remainder > 0){
+    rowsHtml += `<div class="breakdown-row"><span style="color:var(--ink-muted);font-style:italic;">+${remainder} more (see CSV export)</span></div>`;
+  }
+  if(shown.length === 0){
+    rowsHtml = '<div class="breakdown-row"><span style="color:var(--ink-muted);">No data yet</span></div>';
+  }
+  return `<div class="breakdown-box"><h5>${escapeHtml(title)}</h5>${rowsHtml}</div>`;
+}
+
+function renderDashboardHtml(stats){
+  const inner = `
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">Total Registered</div></div>
+      <div class="stat-card accepted"><div class="stat-num">${stats.accepted}</div><div class="stat-label">Accepted</div></div>
+      <div class="stat-card pending"><div class="stat-num">${stats.pending}</div><div class="stat-label">Pending</div></div>
+    </div>
+    <div class="breakdown-grid">
+      ${renderBreakdownBox('By School', stats.bySchool, stats.total, 8)}
+      ${renderBreakdownBox('By Field of Study', stats.byField, stats.total, 8)}
+      ${renderBreakdownBox('By Level', stats.byLevel, stats.total, 8)}
+    </div>
+  `;
+  return `<div class="dash-wrap" id="dashWrap" style="display:${dashboardVisible ? '' : 'none'}">${inner}</div>`;
+}
+
 async function loadAdminData(isManualRefresh){
   // Any reload of the list (accept, delete, panel open, etc.) disarms the
   // bulk button; it's only re-armed below if this call came from an
@@ -2253,6 +2463,7 @@ async function loadAdminData(isManualRefresh){
   try{
     const result = await callBackend('list');
     const records = result.records || [];
+    currentAdminRecords = records;
     if(records.length === 0){
       container.innerHTML = '<div class="empty-state">No registrations recorded yet.</div>';
       return;
@@ -2264,8 +2475,19 @@ async function loadAdminData(isManualRefresh){
       bulkAnswerSlipRecords = records;
     }
 
-    let html = '<div class="admin-refresh">' +
+    const stats = computeDashboardStats(records);
+    let html = `
+      <div class="dash-header">
+        <h4>Registration Dashboard</h4>
+        <button class="dash-toggle" id="dashToggleBtn">${dashboardVisible ? 'Hide Summary' : 'Show Summary'}</button>
+      </div>
+    `;
+    html += renderDashboardHtml(stats);
+
+    html += '<div class="admin-refresh">' +
       '<button class="btn-ghost" id="refreshAdminBtn">Refresh List</button>' +
+      '<button class="btn-csv" id="exportAcceptedCsvBtn">Export Accepted (CSV)</button>' +
+      '<button class="btn-ghost" id="exportAllCsvBtn">Export All (CSV)</button>' +
       `<button class="btn-answer" id="bulkAnswerSlipBtn" ${bulkAnswerSlipReady ? '' : 'disabled'}>Download Bulk Answer Slip</button>` +
       `<button class="btn-answer" id="bulkCertificateBtn" ${bulkAnswerSlipReady ? '' : 'disabled'}>Download Bulk Certificates</button>` +
       '</div>';
@@ -2292,6 +2514,14 @@ async function loadAdminData(isManualRefresh){
     container.innerHTML = html;
 
     document.getElementById('refreshAdminBtn').addEventListener('click', ()=>loadAdminData(true));
+    document.getElementById('exportAcceptedCsvBtn').addEventListener('click', handleExportAcceptedCsv);
+    document.getElementById('exportAllCsvBtn').addEventListener('click', handleExportAllCsv);
+    document.getElementById('dashToggleBtn').addEventListener('click', ()=>{
+      dashboardVisible = !dashboardVisible;
+      const wrap = document.getElementById('dashWrap');
+      if(wrap) wrap.style.display = dashboardVisible ? '' : 'none';
+      document.getElementById('dashToggleBtn').textContent = dashboardVisible ? 'Hide Summary' : 'Show Summary';
+    });
     document.getElementById('bulkAnswerSlipBtn').addEventListener('click', handleBulkAnswerSheetDownload);
     document.getElementById('bulkCertificateBtn').addEventListener('click', handleBulkCertificateDownload);
     container.querySelectorAll('button[data-action="review"]').forEach(btn=>{
