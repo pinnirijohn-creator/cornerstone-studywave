@@ -811,6 +811,7 @@
   </div>
 
   <div class="foot-link"><a id="adminToggle">Registrar View — see all submitted registrations</a></div>
+  <div class="lock-err" id="adminLockNotice" style="max-width:440px;margin:8px auto 0;"></div>
 
   <div class="admin-panel" id="adminPanel">
     <h3>Registrar View</h3>
@@ -2020,11 +2021,87 @@ Graduation Year: ${data.gradYear || 'Not specified'}`
 // The passcode itself is never stored as plain text in the page source — only
 // its SHA-256 hash is kept here, and attempts are checked against that hash.
 // This raises the bar well above a casual visitor reading the source, but it's
-// still a client-side check, so it isn't a substitute for real server-side auth.
+// still a client-side check, so it isn't a substitute for real server-side auth
+// (see the note further down on ESCALATING LOCKOUT for the same caveat).
 const REGISTRAR_PASSCODE_HASH = '5ad401c7f4d9f06cf1c86ec2278337013a35e5ca4d9140ed6e512dbc11e0a164';
 let adminUnlocked = false;
-let failedAttempts = 0;
-let lockoutUntil = 0;
+
+// ─── ESCALATING LOCKOUT ─────────────────────────────────────────────────
+// After every 5 consecutive wrong passcode attempts, the Registrar View is
+// locked out for 5 minutes. If another 5 wrong attempts follow the next
+// time it's tried, the lockout jumps to 5×5 = 25 minutes, then 5×5×5 = 125
+// minutes, and so on (5^level minutes). The lockout is stored in
+// localStorage (not just an in-memory variable) so it survives a page
+// reload or the tab being closed and reopened — otherwise someone could
+// dodge the lockout just by refreshing the page. A successful unlock clears
+// the lockout state entirely.
+//
+// Caveat: like the passcode hash above, this is enforced entirely in the
+// visitor's own browser. Someone who clears their browser storage (or uses
+// a different browser/device/incognito window) restarts the count. It's
+// meant to discourage casual guessing, not to stop a determined attacker —
+// true rate-limiting would need to live on the server side.
+const ADMIN_LOCK_KEY = 'cqcAdminLockState';
+
+function getLockState(){
+  try{
+    const raw = localStorage.getItem(ADMIN_LOCK_KEY);
+    if(!raw) return { failedAttempts:0, lockoutUntil:0, level:0 };
+    const parsed = JSON.parse(raw);
+    return {
+      failedAttempts: Number(parsed.failedAttempts) || 0,
+      lockoutUntil: Number(parsed.lockoutUntil) || 0,
+      level: Number(parsed.level) || 0
+    };
+  }catch(e){
+    return { failedAttempts:0, lockoutUntil:0, level:0 };
+  }
+}
+
+function saveLockState(state){
+  try{ localStorage.setItem(ADMIN_LOCK_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+function formatDuration(ms){
+  const totalSeconds = Math.max(0, Math.ceil(ms/1000));
+  const mins = Math.floor(totalSeconds/60);
+  const secs = totalSeconds%60;
+  if(mins > 0) return `${mins}m ${String(secs).padStart(2,'0')}s`;
+  return `${secs}s`;
+}
+
+let lockoutCountdownTimer = null;
+
+// Reflects the current lockout (if any) in the small notice under the
+// "Registrar View" link, and returns whether it's currently locked. Safe to
+// call at any time (page load, before opening the panel, before checking a
+// passcode) since it always re-reads localStorage first.
+function updateAdminLockUI(){
+  const state = getLockState();
+  const now = Date.now();
+  const notice = document.getElementById('adminLockNotice');
+  const isLocked = now < state.lockoutUntil;
+
+  if(isLocked){
+    notice.textContent = `Registrar View is locked after too many incorrect passcode attempts. Try again in ${formatDuration(state.lockoutUntil - now)}.`;
+    notice.classList.add('show');
+    if(!lockoutCountdownTimer){
+      lockoutCountdownTimer = setInterval(updateAdminLockUI, 1000);
+    }
+  } else {
+    notice.classList.remove('show');
+    if(lockoutCountdownTimer){
+      clearInterval(lockoutCountdownTimer);
+      lockoutCountdownTimer = null;
+    }
+  }
+  return isLocked;
+}
+
+// Check on page load in case a lockout from an earlier visit is still active.
+updateAdminLockUI();
+// ─────────────────────────────────────────────────────────────────────────
+
 // The bulk answer-slip download is only armed immediately after an explicit
 // "Refresh List" click, and is disarmed by a page reload or by any edit to
 // the candidate registration form.
@@ -2046,6 +2123,13 @@ async function sha256(text){
 }
 
 document.getElementById('adminToggle').addEventListener('click', ()=>{
+  if(updateAdminLockUI()){
+    // Locked out: the passcode bar must not open at all. The countdown
+    // notice under the link (kept up to date by updateAdminLockUI) already
+    // tells the visitor how long is left, so there's nothing more to do.
+    return;
+  }
+
   const panel = document.getElementById('adminPanel');
   const wasActive = panel.classList.contains('active');
   panel.classList.toggle('active');
@@ -2071,34 +2155,53 @@ async function attemptUnlock(){
   const err = document.getElementById('passcodeErr');
   const submitBtn = document.getElementById('passcodeSubmit');
 
-  const now = Date.now();
-  if(now < lockoutUntil){
-    const secondsLeft = Math.ceil((lockoutUntil - now) / 1000);
-    err.textContent = `Too many incorrect attempts. Please wait ${secondsLeft}s before trying again.`;
+  // Defense in depth: the "adminToggle" handler already refuses to open the
+  // panel while locked out, but re-check here too in case the panel was
+  // already open when the lockout kicked in, or Enter was pressed.
+  if(updateAdminLockUI()){
+    const state = getLockState();
+    err.textContent = `Too many incorrect attempts. Please wait ${formatDuration(state.lockoutUntil - Date.now())} before trying again.`;
     err.classList.add('show');
     return;
   }
 
   submitBtn.disabled = true;
   const hash = await sha256(input.value);
+  const state = getLockState();
 
   if(hash === REGISTRAR_PASSCODE_HASH){
     adminUnlocked = true;
-    failedAttempts = 0;
+    // A correct passcode clears the failed-attempt count and the
+    // escalation level entirely — the escalation only tracks strings of
+    // wrong guesses, not the history of the whole session.
+    saveLockState({ failedAttempts:0, lockoutUntil:0, level:0 });
+    updateAdminLockUI();
     err.classList.remove('show');
     document.getElementById('lockGate').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
     loadAdminData();
   } else {
-    failedAttempts++;
-    err.textContent = 'Incorrect passcode. Please try again.';
-    err.classList.add('show');
+    const failedAttempts = state.failedAttempts + 1;
     input.value = '';
     input.focus();
+
     if(failedAttempts >= 5){
-      lockoutUntil = Date.now() + 60000; // 60s lockout after 5 failed attempts
-      failedAttempts = 0;
-      err.textContent = 'Too many incorrect attempts. Please wait 60s before trying again.';
+      // Every completed run of 5 wrong attempts escalates the lockout:
+      // level 1 → 5 min, level 2 → 25 min, level 3 → 125 min, and so on
+      // (5^level minutes), until a correct passcode resets it to level 0.
+      const level = state.level + 1;
+      const lockoutMinutes = Math.pow(5, level);
+      const lockoutUntil = Date.now() + lockoutMinutes * 60000;
+      saveLockState({ failedAttempts:0, lockoutUntil, level });
+      err.textContent = `Too many incorrect attempts. Registrar View is locked for ${lockoutMinutes} minute${lockoutMinutes===1?'':'s'}.`;
+      err.classList.add('show');
+      updateAdminLockUI();
+      // The passcode bar must not stay open once locked out.
+      document.getElementById('adminPanel').classList.remove('active');
+    } else {
+      saveLockState({ failedAttempts, lockoutUntil: 0, level: state.level });
+      err.textContent = 'Incorrect passcode. Please try again.';
+      err.classList.add('show');
     }
   }
   submitBtn.disabled = false;
