@@ -721,7 +721,7 @@
   <div class="stepper" id="stepper"></div>
 
   <div class="card" id="closedCard" style="display:none;">
-    <div class="closed-icon">&#128274;</div>
+    <div class="closed-icon" id="closedIcon">&#128274;</div>
     <h2 id="closedHeading">Registration Closed</h2>
     <p class="desc" id="closedMessage"></p>
     <p class="desc">If you have questions, please email the Registrar at <strong>interestincqc@outlook.com</strong>.</p>
@@ -987,25 +987,42 @@ async function callBackend(action, extra){
   return json;
 }
 
-// Human-readable label for the registration deadline — keep this in sync
-// with REGISTRATION_DEADLINE in registration_backend.gs. The backend's
-// 'status' action is the authoritative source for whether registration is
-// actually open; this label is only used for display text.
+// Human-readable labels for the registration window — keep these in sync
+// with REGISTRATION_OPEN_DATE / REGISTRATION_DEADLINE in
+// registration_backend.gs. The backend's 'status' action is the
+// authoritative source for whether registration is actually open; these
+// labels are only used for display text.
+const REGISTRATION_OPEN_DATE_LABEL = '1st January, 2026';
 const REGISTRATION_DEADLINE_LABEL = '20th December, 2026';
 
-// ── DEADLINE / CAPACITY CHECK ───────────────────────────────────
+// ── OPEN DATE / DEADLINE / CAPACITY CHECK ───────────────────────
 // Runs once on page load. Asks the backend (the source of truth, since it
 // knows the live registration count and the current server time) whether
-// registration is still open. If closed, the entire form is replaced with
-// a "Registration Closed" message — this is a UX convenience only; the
-// backend re-checks and rejects at submit time regardless, so this cannot
-// be bypassed by skipping this check or disabling JS.
+// registration is currently open. If not — whether it hasn't opened yet,
+// or has closed (deadline passed or capacity reached) — the entire form
+// is replaced with an explanatory message. This is a UX convenience only;
+// the backend re-checks and rejects at submit time regardless, so this
+// cannot be bypassed by skipping this check or disabling JS.
 async function checkRegistrationStatus(){
   try{
     const status = await callBackend('status');
+
+    if(status.notYetOpen){
+      document.querySelector('.stepper').style.display = 'none';
+      document.getElementById('formCard').style.display = 'none';
+      document.getElementById('closedIcon').textContent = '\u23F3'; // hourglass
+      document.getElementById('closedHeading').textContent = 'Registration Not Yet Open';
+      document.getElementById('closedMessage').textContent =
+        `Registration for the Cornerstone Quiz Contest opens on ${REGISTRATION_OPEN_DATE_LABEL}. Please check back then.`;
+      document.getElementById('closedCard').style.display = 'block';
+      return;
+    }
+
     if(status.closed){
       document.querySelector('.stepper').style.display = 'none';
       document.getElementById('formCard').style.display = 'none';
+      document.getElementById('closedIcon').textContent = '\uD83D\uDD12'; // lock
+      document.getElementById('closedHeading').textContent = 'Registration Closed';
       const reason = status.closedReason === 'deadline'
         ? `The registration deadline (${REGISTRATION_DEADLINE_LABEL}) has passed.`
         : `The maximum number of registrations for this year has been reached.`;
@@ -1013,10 +1030,11 @@ async function checkRegistrationStatus(){
       document.getElementById('closedCard').style.display = 'block';
       return;
     }
+
+    // Registration is open — surface a banner only when it's actually
+    // worth flagging, so the form doesn't nag every visitor for no reason.
     const banner = document.getElementById('statusBanner');
     const daysLeft = Math.ceil((new Date(status.deadline) - new Date()) / (1000*60*60*24));
-    // Only surface a banner when it's actually worth flagging, so the form
-    // doesn't nag every visitor for no reason.
     if(status.remainingSlots <= 50 || (daysLeft >= 0 && daysLeft <= 7)){
       const parts = [];
       if(status.remainingSlots <= 50) parts.push(`only ${status.remainingSlots} registration slot${status.remainingSlots === 1 ? '' : 's'} remaining`);
@@ -1434,7 +1452,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     btn.textContent = 'Submit Registration';
     // If the rejection was specifically because registration just closed,
     // reflect that immediately instead of leaving a dead form on screen.
-    if(e && /registration is closed/i.test(e.message || '')){
+    if(e && /registration (is closed|has not opened)/i.test(e.message || '')){
       checkRegistrationStatus();
     }
   }
