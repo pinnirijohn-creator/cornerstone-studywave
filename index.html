@@ -192,6 +192,21 @@
   @media(max-width:520px){.card{padding:26px 18px;}}
 
   /* ═══════════════════════════════════════════════════════════
+     DEADLINE / CAPACITY BANNER & CLOSED CARD
+  ═══════════════════════════════════════════════════════════ */
+  .banner{
+    max-width:640px;margin:0 auto 16px;padding:12px 18px;border-radius:var(--radius-sm);
+    background:#FEF3D0;border-left:4px solid var(--gold-2);color:#5A4200;
+    font-size:12.5px;line-height:1.5;text-align:center;
+  }
+  #closedCard{text-align:center;}
+  #closedCard .closed-icon{font-size:34px;margin-bottom:10px;}
+  #closedCard h2{
+    font-family:'Fraunces',serif;font-size:21px;color:var(--navy);margin-bottom:10px;
+  }
+  #closedCard .desc{max-width:480px;margin:0 auto 10px;}
+
+  /* ═══════════════════════════════════════════════════════════
      PANELS / ANIMATION
   ═══════════════════════════════════════════════════════════ */
   .panel{display:none;}
@@ -701,7 +716,16 @@
     <div class="subtitle-reg">Candidate Registration</div>
   </div>
 
+  <div class="banner" id="statusBanner" style="display:none;"></div>
+
   <div class="stepper" id="stepper"></div>
+
+  <div class="card" id="closedCard" style="display:none;">
+    <div class="closed-icon">&#128274;</div>
+    <h2 id="closedHeading">Registration Closed</h2>
+    <p class="desc" id="closedMessage"></p>
+    <p class="desc">If you have questions, please email the Registrar at <strong>interestincqc@outlook.com</strong>.</p>
+  </div>
 
   <div class="card" id="formCard">
     <!-- PANEL 1: BIO DATA -->
@@ -962,6 +986,52 @@ async function callBackend(action, extra){
   if(!json.success){ throw new Error(json.error || 'Backend request failed'); }
   return json;
 }
+
+// Human-readable label for the registration deadline — keep this in sync
+// with REGISTRATION_DEADLINE in registration_backend.gs. The backend's
+// 'status' action is the authoritative source for whether registration is
+// actually open; this label is only used for display text.
+const REGISTRATION_DEADLINE_LABEL = '20th December, 2026';
+
+// ── DEADLINE / CAPACITY CHECK ───────────────────────────────────
+// Runs once on page load. Asks the backend (the source of truth, since it
+// knows the live registration count and the current server time) whether
+// registration is still open. If closed, the entire form is replaced with
+// a "Registration Closed" message — this is a UX convenience only; the
+// backend re-checks and rejects at submit time regardless, so this cannot
+// be bypassed by skipping this check or disabling JS.
+async function checkRegistrationStatus(){
+  try{
+    const status = await callBackend('status');
+    if(status.closed){
+      document.querySelector('.stepper').style.display = 'none';
+      document.getElementById('formCard').style.display = 'none';
+      const reason = status.closedReason === 'deadline'
+        ? `The registration deadline (${REGISTRATION_DEADLINE_LABEL}) has passed.`
+        : `The maximum number of registrations for this year has been reached.`;
+      document.getElementById('closedMessage').textContent = reason;
+      document.getElementById('closedCard').style.display = 'block';
+      return;
+    }
+    const banner = document.getElementById('statusBanner');
+    const daysLeft = Math.ceil((new Date(status.deadline) - new Date()) / (1000*60*60*24));
+    // Only surface a banner when it's actually worth flagging, so the form
+    // doesn't nag every visitor for no reason.
+    if(status.remainingSlots <= 50 || (daysLeft >= 0 && daysLeft <= 7)){
+      const parts = [];
+      if(status.remainingSlots <= 50) parts.push(`only ${status.remainingSlots} registration slot${status.remainingSlots === 1 ? '' : 's'} remaining`);
+      if(daysLeft >= 0 && daysLeft <= 7) parts.push(`registration closes ${daysLeft === 0 ? 'today' : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} (${REGISTRATION_DEADLINE_LABEL})`);
+      banner.textContent = `Note: ${parts.join(' and ')}.`;
+      banner.style.display = 'block';
+    }
+  }catch(e){
+    // If the status check itself fails (e.g. network hiccup), fail open —
+    // let the candidate attempt to fill the form. The backend still
+    // enforces the real limits at submit time either way.
+    console.error('Could not check registration status', e);
+  }
+}
+checkRegistrationStatus();
 
 const STEP_LABELS = ["Bio Data","Contact Info","Education","Acknowledgement"];
 let currentStep = 0;
@@ -1356,9 +1426,17 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     document.querySelector('.stepper').style.display = 'none';
   }catch(e){
     console.error(e);
-    alert('Something went wrong saving your registration. Please try again.');
+    // Surface the backend's actual message when it has one (e.g. "Registration
+    // is closed…", or a validation error) rather than a generic message that
+    // would hide the real reason from the candidate.
+    alert(e && e.message ? e.message : 'Something went wrong saving your registration. Please try again.');
     btn.disabled = false;
     btn.textContent = 'Submit Registration';
+    // If the rejection was specifically because registration just closed,
+    // reflect that immediately instead of leaving a dead form on screen.
+    if(e && /registration is closed/i.test(e.message || '')){
+      checkRegistrationStatus();
+    }
   }
 });
 
