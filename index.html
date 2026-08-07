@@ -207,6 +207,44 @@
   #closedCard .desc{max-width:480px;margin:0 auto 10px;}
 
   /* ═══════════════════════════════════════════════════════════
+     LIVE COUNTDOWN BANNER
+  ═══════════════════════════════════════════════════════════ */
+  .countdown-banner{
+    max-width:640px;margin:0 auto 16px;padding:16px 20px;border-radius:var(--radius-md);
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    box-shadow:var(--shadow-md);
+    text-align:center;color:#fff;position:relative;overflow:hidden;
+  }
+  .countdown-banner::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,transparent,var(--gold-3),transparent);
+  }
+  .countdown-label{
+    font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--gold-3);font-weight:600;margin-bottom:10px;
+  }
+  .countdown-units{
+    display:flex;justify-content:center;gap:10px;flex-wrap:wrap;
+  }
+  .countdown-unit{
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);
+    border-radius:var(--radius-sm);padding:8px 10px;min-width:58px;
+  }
+  .countdown-unit .num{
+    font-family:'Fraunces',serif;font-size:22px;font-weight:600;line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .countdown-unit .unit-label{
+    font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;
+    color:rgba(255,255,255,0.7);margin-top:4px;
+  }
+  .countdown-sub{font-size:11.5px;color:rgba(255,255,255,0.75);margin-top:10px;}
+  @media(max-width:420px){
+    .countdown-unit{min-width:48px;padding:7px 8px;}
+    .countdown-unit .num{font-size:18px;}
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      PANELS / ANIMATION
   ═══════════════════════════════════════════════════════════ */
   .panel{display:none;}
@@ -716,6 +754,17 @@
     <div class="subtitle-reg">Candidate Registration</div>
   </div>
 
+  <div class="countdown-banner" id="countdownBanner" style="display:none;">
+    <div class="countdown-label" id="countdownLabel">Registration closes in</div>
+    <div class="countdown-units">
+      <div class="countdown-unit"><div class="num" id="cdDays">--</div><div class="unit-label">Days</div></div>
+      <div class="countdown-unit"><div class="num" id="cdHours">--</div><div class="unit-label">Hours</div></div>
+      <div class="countdown-unit"><div class="num" id="cdMins">--</div><div class="unit-label">Mins</div></div>
+      <div class="countdown-unit"><div class="num" id="cdSecs">--</div><div class="unit-label">Secs</div></div>
+    </div>
+    <div class="countdown-sub" id="countdownSub"></div>
+  </div>
+
   <div class="banner" id="statusBanner" style="display:none;"></div>
 
   <div class="stepper" id="stepper"></div>
@@ -1003,6 +1052,60 @@ const REGISTRATION_DEADLINE_LABEL = '20th December, 2026';
 // is replaced with an explanatory message. This is a UX convenience only;
 // the backend re-checks and rejects at submit time regardless, so this
 // cannot be bypassed by skipping this check or disabling JS.
+// ── LIVE COUNTDOWN ──────────────────────────────────────────────
+// Ticks a Days/Hours/Mins/Secs countdown toward a target ISO date inside
+// #countdownBanner. Purely a display convenience — the backend's 'status'
+// action (see checkRegistrationStatus) remains the authoritative source
+// for whether registration is actually open, so a stale clock here can
+// never let someone bypass the real deadline/capacity enforcement.
+let countdownTimerId = null;
+
+function stopCountdown(){
+  if(countdownTimerId){ clearInterval(countdownTimerId); countdownTimerId = null; }
+  document.getElementById('countdownBanner').style.display = 'none';
+}
+
+function startCountdown(targetISO, opts){
+  opts = opts || {};
+  const label = opts.label || 'Registration closes in';
+  const sub = opts.sub || '';
+  const onZero = opts.onZero || function(){};
+
+  document.getElementById('countdownLabel').textContent = label;
+  document.getElementById('countdownSub').textContent = sub;
+  document.getElementById('countdownBanner').style.display = 'block';
+
+  const target = new Date(targetISO).getTime();
+  const dEl = document.getElementById('cdDays');
+  const hEl = document.getElementById('cdHours');
+  const mEl = document.getElementById('cdMins');
+  const sEl = document.getElementById('cdSecs');
+
+  function tick(){
+    const diff = target - Date.now();
+    if(diff <= 0){
+      dEl.textContent = hEl.textContent = mEl.textContent = sEl.textContent = '00';
+      clearInterval(countdownTimerId);
+      countdownTimerId = null;
+      onZero();
+      return;
+    }
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    dEl.textContent = String(days).padStart(2,'0');
+    hEl.textContent = String(hours).padStart(2,'0');
+    mEl.textContent = String(mins).padStart(2,'0');
+    sEl.textContent = String(secs).padStart(2,'0');
+  }
+
+  if(countdownTimerId) clearInterval(countdownTimerId);
+  tick();
+  countdownTimerId = setInterval(tick, 1000);
+}
+
 async function checkRegistrationStatus(){
   try{
     const status = await callBackend('status');
@@ -1015,6 +1118,11 @@ async function checkRegistrationStatus(){
       document.getElementById('closedMessage').textContent =
         `Registration for the Cornerstone Quiz Contest opens on ${REGISTRATION_OPEN_DATE_LABEL}. Please check back then.`;
       document.getElementById('closedCard').style.display = 'block';
+      startCountdown(status.opensAt, {
+        label: 'Registration opens in',
+        sub: `Opening date: ${REGISTRATION_OPEN_DATE_LABEL}`,
+        onZero: checkRegistrationStatus
+      });
       return;
     }
 
@@ -1028,18 +1136,23 @@ async function checkRegistrationStatus(){
         : `The maximum number of registrations for this year has been reached.`;
       document.getElementById('closedMessage').textContent = reason;
       document.getElementById('closedCard').style.display = 'block';
+      stopCountdown();
       return;
     }
 
-    // Registration is open — surface a banner only when it's actually
-    // worth flagging, so the form doesn't nag every visitor for no reason.
+    // Registration is open — show the live countdown to the deadline, and
+    // additionally surface a plain-text banner only when something is
+    // actually worth flagging (near-empty capacity), so the page doesn't
+    // nag every visitor for no reason.
+    startCountdown(status.deadline, {
+      label: 'Registration closes in',
+      sub: `Deadline: ${REGISTRATION_DEADLINE_LABEL} · ${status.remainingSlots} of ${status.capacity} slots remaining`,
+      onZero: checkRegistrationStatus
+    });
+
     const banner = document.getElementById('statusBanner');
-    const daysLeft = Math.ceil((new Date(status.deadline) - new Date()) / (1000*60*60*24));
-    if(status.remainingSlots <= 50 || (daysLeft >= 0 && daysLeft <= 7)){
-      const parts = [];
-      if(status.remainingSlots <= 50) parts.push(`only ${status.remainingSlots} registration slot${status.remainingSlots === 1 ? '' : 's'} remaining`);
-      if(daysLeft >= 0 && daysLeft <= 7) parts.push(`registration closes ${daysLeft === 0 ? 'today' : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} (${REGISTRATION_DEADLINE_LABEL})`);
-      banner.textContent = `Note: ${parts.join(' and ')}.`;
+    if(status.remainingSlots <= 50){
+      banner.textContent = `Note: only ${status.remainingSlots} registration slot${status.remainingSlots === 1 ? '' : 's'} remaining.`;
       banner.style.display = 'block';
     }
   }catch(e){
