@@ -765,8 +765,6 @@
     <div class="countdown-sub" id="countdownSub"></div>
   </div>
 
-  <div class="banner" id="statusBanner" style="display:none;"></div>
-
   <div class="stepper" id="stepper"></div>
 
   <div class="card" id="closedCard" style="display:none;">
@@ -1140,21 +1138,12 @@ async function checkRegistrationStatus(){
       return;
     }
 
-    // Registration is open — show the live countdown to the deadline, and
-    // additionally surface a plain-text banner only when something is
-    // actually worth flagging (near-empty capacity), so the page doesn't
-    // nag every visitor for no reason.
+    // Registration is open — show the live countdown to the deadline.
     startCountdown(status.deadline, {
       label: 'Registration closes in',
-      sub: `Deadline: ${REGISTRATION_DEADLINE_LABEL} · ${status.remainingSlots} of ${status.capacity} slots remaining`,
+      sub: `Deadline: ${REGISTRATION_DEADLINE_LABEL}`,
       onZero: checkRegistrationStatus
     });
-
-    const banner = document.getElementById('statusBanner');
-    if(status.remainingSlots <= 50){
-      banner.textContent = `Note: only ${status.remainingSlots} registration slot${status.remainingSlots === 1 ? '' : 's'} remaining.`;
-      banner.style.display = 'block';
-    }
   }catch(e){
     // If the status check itself fails (e.g. network hiccup), fail open —
     // let the candidate attempt to fill the form. The backend still
