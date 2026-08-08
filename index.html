@@ -1150,8 +1150,32 @@
       <p class="desc">Used to place the candidate in the correct category and to generate the Application ID.</p>
       <div class="field" data-field="school">
         <label>School / Alma Mater<span class="req">*</span></label>
-        <input type="text" id="school" placeholder="e.g. Heipang Government Secondary School">
-        <div class="err-msg">School / Alma mater is required.</div>
+        <select id="school">
+          <option value="">Select school</option>
+          <option value="Bright Star Christian Academy, Heipang">Bright Star Christian Academy, Heipang</option>
+          <option value="COCIN Unity Junior Secondary School, Heipang">COCIN Unity Junior Secondary School, Heipang</option>
+          <option value="Excellence Academy Yow, Heipang">Excellence Academy Yow, Heipang</option>
+          <option value="FAAN Staff Secondary School, Heipang">FAAN Staff Secondary School, Heipang</option>
+          <option value="Government Junior Secondary School Ban-Larwin, Heipang">Government Junior Secondary School Ban-Larwin, Heipang</option>
+          <option value="Government Junior Secondary School Tatu, Heipang">Government Junior Secondary School Tatu, Heipang</option>
+          <option value="Government Secondary School, Heipang">Government Secondary School, Heipang</option>
+          <option value="Preye College, Heipang">Preye College, Heipang</option>
+          <option value="Prestige College, Heipang">Prestige College, Heipang</option>
+          <option value="Shirev Academy Yow, Heipang">Shirev Academy Yow, Heipang</option>
+          <option value="St. Micheal Model College, Heipang">St. Micheal Model College, Heipang</option>
+          <option value="Unique College Yow, Heipang">Unique College Yow, Heipang</option>
+          <option value="OTHER_SCHOOL">Other (not listed)</option>
+        </select>
+        <div class="err-msg">Please select the candidate's school.</div>
+      </div>
+      <div class="field" id="otherSchoolField" style="display:none;">
+        <label for="otherSchool">Name of school<span class="req">*</span></label>
+        <div class="other-level-row">
+          <input type="text" id="otherSchool" maxlength="80" placeholder="Type the full school name">
+          <button type="button" class="btn-ghost" id="otherSchoolOk">OK</button>
+        </div>
+        <div class="err-msg">Please enter the school name and press OK.</div>
+        <div class="other-level-confirmed" id="otherSchoolConfirmed">School recorded.</div>
       </div>
       <div class="row-2">
         <div class="field" data-field="level">
@@ -1590,6 +1614,50 @@ document.getElementById('otherLevelOk').addEventListener('click', ()=>{
   document.getElementById('otherLevelConfirmed').classList.add('show');
 });
 
+let otherSchoolConfirmed = false;
+
+function syncOtherSchoolField(){
+  const isOther = document.getElementById('school').value === 'OTHER_SCHOOL';
+  const field = document.getElementById('otherSchoolField');
+  field.style.display = isOther ? 'block' : 'none';
+  if(!isOther){
+    document.getElementById('otherSchool').value = '';
+    document.getElementById('otherSchoolConfirmed').classList.remove('show');
+    field.classList.remove('invalid');
+    otherSchoolConfirmed = false;
+  }
+}
+
+document.getElementById('school').addEventListener('change', ()=>{
+  otherSchoolConfirmed = false;
+  document.getElementById('otherSchoolConfirmed').classList.remove('show');
+  document.getElementById('otherSchoolField').classList.remove('invalid');
+  syncOtherSchoolField();
+});
+document.getElementById('otherSchool').addEventListener('input', ()=>{
+  otherSchoolConfirmed = false;
+  document.getElementById('otherSchoolConfirmed').classList.remove('show');
+  document.getElementById('otherSchoolField').classList.remove('invalid');
+});
+document.getElementById('otherSchoolOk').addEventListener('click', ()=>{
+  const input = document.getElementById('otherSchool');
+  const field = document.getElementById('otherSchoolField');
+  const value = input.value.trim();
+  if(!value){
+    field.classList.add('invalid');
+    return;
+  }
+  const gssMatch = findGSSMatch(value);
+  if(gssMatch){
+    openGSSModal('otherSchool', gssMatch);
+    return;
+  }
+  data.school = value;
+  otherSchoolConfirmed = true;
+  field.classList.remove('invalid');
+  document.getElementById('otherSchoolConfirmed').classList.add('show');
+});
+
 function normalizeAddress(value){
   let v = value;
   v = v.replace(/\bcocin\b/gi, 'COCIN');
@@ -1628,7 +1696,7 @@ function attachGSSCheck(fieldId){
   });
 }
 attachGSSCheck('address');
-attachGSSCheck('school');
+attachGSSCheck('otherSchool');
 
 document.getElementById('gssModalYes').addEventListener('click', ()=>{
   if(!gssPendingField) return;
@@ -1670,7 +1738,7 @@ function validateStep(step){
     if(id === 'guardianName' && ok){
       ok = isValidGuardianName(el.value.trim());
     }
-    if((id === 'address' || id === 'school') && ok){
+    if(id === 'address' && ok){
       const raw = el.value.trim();
       const gssMatch = findGSSMatch(raw);
       if(gssMatch){
@@ -1685,6 +1753,10 @@ function validateStep(step){
       fieldWrap.classList.remove('invalid');
       data[id] = normalized;
     }
+    else if(id === 'school'){
+      fieldWrap.classList.remove('invalid');
+      if(el.value !== 'OTHER_SCHOOL'){ data.school = el.value.trim(); }
+    }
     else{ fieldWrap.classList.remove('invalid'); data[id] = el.value.trim(); }
   });
   if(step === 2 && document.getElementById('level').value === 'OTHER'){
@@ -1698,6 +1770,17 @@ function validateStep(step){
       data.otherLevel = otherValue;
     }
   }
+  if(step === 2 && document.getElementById('school').value === 'OTHER_SCHOOL'){
+    const otherSchoolField = document.getElementById('otherSchoolField');
+    const otherSchoolValue = document.getElementById('otherSchool').value.trim();
+    if(!otherSchoolValue || !otherSchoolConfirmed){
+      otherSchoolField.classList.add('invalid');
+      valid = false;
+    }else{
+      otherSchoolField.classList.remove('invalid');
+      data.school = otherSchoolValue;
+    }
+  }
   return valid;
 }
 
@@ -1707,6 +1790,9 @@ function saveStepData(step){
   if(step === 2){
     data.gradYear = document.getElementById('gradYear').value;
     if(data.level === 'OTHER') data.otherLevel = document.getElementById('otherLevel').value.trim();
+    if(document.getElementById('school').value === 'OTHER_SCHOOL'){
+      data.school = document.getElementById('otherSchool').value.trim();
+    }
   }
 }
 
