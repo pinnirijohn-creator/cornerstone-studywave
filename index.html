@@ -958,6 +958,235 @@
   .stub-card h2{font-family:'Fraunces',serif;color:var(--navy);margin-bottom:10px;}
   .stub-card p{color:var(--ink-soft);font-size:14px;line-height:1.6;max-width:440px;margin:0 auto 22px;}
 
+  /* ═══════════════════════════════════════════════════════════
+     NAV DROPDOWN (Senior Secondary sub-menu)
+  ═══════════════════════════════════════════════════════════ */
+  .nav-dropdown{position:relative;flex-shrink:0;}
+  .nav-dropdown-trigger{
+    appearance:none;border:none;background:transparent;cursor:pointer;
+    color:rgba(255,255,255,0.78);font-family:'Inter',sans-serif;
+    font-weight:600;font-size:12px;letter-spacing:.6px;text-transform:uppercase;
+    padding:18px 14px;white-space:nowrap;display:flex;align-items:center;gap:5px;
+    border-bottom:3px solid transparent;transition:var(--transition);
+  }
+  .nav-dropdown-trigger:hover{color:#fff;}
+  .nav-dropdown-trigger.active{color:#fff;border-bottom-color:var(--gold-2);}
+  .nav-dropdown-trigger .caret{
+    width:8px;height:8px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+    transform:rotate(45deg);margin-top:-3px;transition:transform var(--transition);
+  }
+  .nav-dropdown.open .nav-dropdown-trigger .caret{transform:rotate(-135deg);margin-top:3px;}
+  .nav-dropdown-menu{
+    position:absolute;top:100%;left:0;margin-top:6px;min-width:280px;
+    background:var(--paper);border-radius:var(--radius-md);box-shadow:var(--shadow-xl);
+    border:1px solid var(--rule);overflow:hidden;
+    opacity:0;visibility:hidden;transform:translateY(-8px);
+    transition:opacity var(--transition),transform var(--transition),visibility var(--transition);
+    z-index:600;
+  }
+  .nav-dropdown.open .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0);}
+  .nav-dropdown-item{
+    display:flex;align-items:flex-start;gap:12px;width:100%;
+    padding:14px 16px;text-align:left;background:transparent;border:none;
+    border-bottom:1px solid var(--rule);cursor:pointer;transition:var(--transition);
+  }
+  .nav-dropdown-item:last-child{border-bottom:none;}
+  .nav-dropdown-item:hover{background:#F5F7FD;}
+  .nav-dropdown-item .dd-num{
+    flex-shrink:0;width:26px;height:26px;border-radius:8px;
+    background:linear-gradient(135deg,var(--navy),var(--navy-3));color:var(--gold-3);
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+    font-family:'Inter',sans-serif;
+  }
+  .nav-dropdown-item .dd-title{font-family:'Fraunces',serif;font-size:13.5px;color:var(--ink);font-weight:600;line-height:1.3;}
+  .nav-dropdown-item .dd-sub{font-size:11.5px;color:var(--ink-muted);margin-top:2px;line-height:1.4;}
+
+  /* ═══════════════════════════════════════════════════════════
+     SENIOR SECONDARY: hub + shared sub-page chrome
+  ═══════════════════════════════════════════════════════════ */
+  .ss-hero{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);
+    padding:52px 20px 60px;text-align:center;position:relative;overflow:hidden;
+  }
+  .ss-hero::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(212,160,23,0.5),transparent);
+    height:1px;bottom:0;top:auto;
+  }
+  .ss-hero .eyebrow{
+    color:var(--gold-3);font-size:11.5px;font-weight:700;letter-spacing:1.6px;
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .ss-hero h1{font-family:'Fraunces',serif;color:#fff;font-size:30px;font-weight:600;margin-bottom:10px;}
+  .ss-hero p{color:rgba(255,255,255,0.78);font-size:14px;max-width:520px;margin:0 auto;line-height:1.6;}
+  .ss-wrap{max-width:960px;margin:0 auto;padding:36px 20px 60px;}
+  .ss-back{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12.5px;font-weight:600;color:var(--navy-2);cursor:pointer;
+    margin-bottom:22px;transition:var(--transition);
+  }
+  .ss-back:hover{color:var(--gold-2);}
+  .ss-back::before{content:'←';font-size:14px;}
+
+  /* Departmental Tri-Feeder System */
+  .path-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;margin-bottom:8px;
+  }
+  .path-card{
+    background:var(--paper);border:1.5px solid var(--rule);border-radius:var(--radius-lg);
+    padding:28px 22px;text-align:center;cursor:pointer;box-shadow:var(--shadow-sm);
+    transition:var(--transition);
+  }
+  .path-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--gold-2);}
+  .path-card .path-icon{
+    width:56px;height:56px;border-radius:16px;margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;font-size:27px;
+    background:linear-gradient(135deg,var(--navy),var(--navy-3));color:var(--gold-3);
+  }
+  .path-card h3{font-family:'Fraunces',serif;font-size:17px;color:var(--navy);margin-bottom:6px;}
+  .path-card p{font-size:12.5px;color:var(--ink-muted);line-height:1.5;}
+  .path-banner{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));border-radius:var(--radius-lg);
+    padding:18px 24px;margin-bottom:26px;color:#fff;
+  }
+  .path-banner .pb-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.65);}
+  .path-banner .pb-name{font-family:'Fraunces',serif;font-size:19px;font-weight:600;}
+  .path-banner button{
+    appearance:none;cursor:pointer;background:rgba(255,255,255,0.1);
+    border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:11.5px;font-weight:600;
+    padding:9px 16px;border-radius:99px;transition:var(--transition);
+  }
+  .path-banner button:hover{background:rgba(255,255,255,0.2);}
+  .board-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;
+  }
+  .board-card{
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-lg);
+    padding:22px 20px;box-shadow:var(--shadow-sm);transition:var(--transition);
+  }
+  .board-card:hover{box-shadow:var(--shadow-md);}
+  .board-card .bc-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .board-card .bc-icon{
+    width:38px;height:38px;border-radius:11px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    background:linear-gradient(135deg,var(--gold-2),var(--gold-3));color:var(--navy);
+  }
+  .board-card h4{font-family:'Fraunces',serif;font-size:15px;color:var(--ink);}
+  .board-card .bc-count{font-size:11px;color:var(--ink-muted);}
+  .board-card .bc-status{
+    display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    padding:4px 10px;border-radius:99px;background:var(--error-bg);color:var(--error);
+  }
+
+  /* Advanced STEM Laboratory Visualization */
+  .stem-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .stem-tab{
+    appearance:none;cursor:pointer;background:var(--paper);border:1.5px solid var(--rule);
+    color:var(--ink-soft);font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;
+    padding:10px 20px;border-radius:99px;transition:var(--transition);
+  }
+  .stem-tab:hover{border-color:var(--gold-2);}
+  .stem-tab.active{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-color:transparent;
+  }
+  .lab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+  .lab-card{
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-lg);
+    overflow:hidden;box-shadow:var(--shadow-sm);transition:var(--transition);cursor:pointer;
+  }
+  .lab-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+  .lab-thumb{
+    position:relative;height:130px;
+    background:linear-gradient(135deg,var(--navy),var(--navy-3));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .lab-thumb .play-btn{
+    width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,0.15);
+    border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:16px;
+  }
+  .lab-thumb .lab-badge{
+    position:absolute;top:10px;right:10px;background:rgba(6,14,34,0.55);color:var(--gold-3);
+    font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    padding:4px 9px;border-radius:99px;
+  }
+  .lab-body{padding:16px 18px;}
+  .lab-body h4{font-family:'Fraunces',serif;font-size:14.5px;color:var(--ink);margin-bottom:6px;line-height:1.35;}
+  .lab-body p{font-size:12px;color:var(--ink-muted);line-height:1.5;}
+  .lab-atp{
+    display:inline-block;margin-top:10px;font-size:10.5px;font-weight:700;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--navy-2);background:#EAF0FE;padding:4px 9px;border-radius:6px;
+  }
+  .lab-modal-backdrop{
+    position:fixed;inset:0;background:rgba(6,14,34,0.72);z-index:2000;
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .lab-modal-backdrop.show{display:flex;}
+  .lab-modal{
+    background:var(--paper);border-radius:var(--radius-lg);max-width:560px;width:100%;
+    box-shadow:var(--shadow-xl);overflow:hidden;
+  }
+  .lab-modal-video{
+    aspect-ratio:16/9;background:#0A1530;display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,0.6);text-align:center;padding:20px;font-size:13px;
+  }
+  .lab-modal-video video{width:100%;height:100%;object-fit:cover;}
+  .lab-modal-body{padding:20px 22px;}
+  .lab-modal-body h3{font-family:'Fraunces',serif;color:var(--navy);font-size:17px;margin-bottom:8px;}
+  .lab-modal-body p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-bottom:14px;}
+  .lab-modal-close{
+    appearance:none;cursor:pointer;background:transparent;border:1.5px solid var(--rule);
+    color:var(--ink-soft);font-size:12px;font-weight:600;padding:9px 18px;border-radius:99px;
+  }
+
+  /* National Examination Repository */
+  .repo-filters{
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-lg);
+    padding:20px;box-shadow:var(--shadow-sm);margin-bottom:22px;
+  }
+  .repo-filters .rf-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px;}
+  .repo-filters input,.repo-filters select{
+    width:100%;padding:11px 14px;border:1.5px solid var(--rule);border-radius:var(--radius-sm);
+    font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);background:#FAFBFE;
+    transition:var(--transition);-webkit-appearance:none;appearance:none;
+  }
+  .repo-filters select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%235B6472' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:34px;cursor:pointer;
+  }
+  .repo-filters input:focus,.repo-filters select:focus{
+    outline:none;border-color:var(--navy-3);background:#fff;box-shadow:0 0 0 4px rgba(35,64,153,0.12);
+  }
+  .repo-count{font-size:12px;color:var(--ink-muted);margin-bottom:14px;}
+  .repo-list{display:flex;flex-direction:column;gap:10px;}
+  .repo-row{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-md);
+    padding:14px 18px;box-shadow:var(--shadow-sm);transition:var(--transition);
+  }
+  .repo-row:hover{border-color:var(--gold-2);}
+  .repo-row .rr-badge{
+    flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:5px 10px;border-radius:6px;background:var(--navy);color:var(--gold-3);
+  }
+  .repo-row .rr-main{flex:1;min-width:180px;}
+  .repo-row .rr-main .rr-topic{font-family:'Fraunces',serif;font-size:13.5px;color:var(--ink);margin-bottom:2px;}
+  .repo-row .rr-main .rr-meta{font-size:11.5px;color:var(--ink-muted);}
+  .repo-row .rr-status{
+    flex-shrink:0;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+    padding:5px 10px;border-radius:99px;background:var(--error-bg);color:var(--error);
+  }
+  .repo-row .rr-status.available{background:var(--success-bg);color:var(--success);}
+  .repo-empty{
+    text-align:center;padding:40px 20px;color:var(--ink-muted);font-size:13px;
+  }
+  .repo-note{
+    margin-top:22px;background:#FBF6E8;border-left:3px solid var(--gold-2);border-radius:8px;
+    padding:14px 16px;font-size:12px;color:var(--ink-soft);line-height:1.6;
+  }
+
   @media (max-width:520px){
     .hero{padding:96px 18px 56px;min-height:560px;}
     .hero-btn{padding:14px 22px;font-size:12px;}
@@ -976,7 +1205,25 @@
     </div>
     <button class="nav-tab active" data-page="page-home" onclick="showPage('page-home')">Home</button>
     <button class="nav-tab" data-page="page-junior" onclick="showPage('page-junior')">Junior Secondary</button>
-    <button class="nav-tab" data-page="page-senior" onclick="showPage('page-senior')">Senior Secondary</button>
+    <div class="nav-dropdown" id="seniorNavDropdown">
+      <button class="nav-dropdown-trigger" data-page="page-senior" id="seniorNavTrigger" onclick="toggleSeniorDropdown(event)">
+        Senior Secondary <span class="caret"></span>
+      </button>
+      <div class="nav-dropdown-menu" id="seniorNavMenu">
+        <button class="nav-dropdown-item" onclick="goSenior('page-senior-tri')">
+          <div class="dd-num">1</div>
+          <div><div class="dd-title">Departmental Tri-Feeder System</div><div class="dd-sub">Choose Science, Commercial or Arts to see your subject boards.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goSenior('page-senior-stem')">
+          <div class="dd-num">2</div>
+          <div><div class="dd-title">Advanced STEM Laboratory Visualization</div><div class="dd-sub">Step-by-step video dissections for WAEC Alternative-to-Practical.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goSenior('page-senior-repo')">
+          <div class="dd-num">3</div>
+          <div><div class="dd-title">National Examination Repository</div><div class="dd-sub">Searchable WAEC, NECO &amp; JAMB UTME papers, 2015–present.</div></div>
+        </button>
+      </div>
+    </div>
     <button class="nav-tab" data-page="page-quiz" onclick="showPage('page-quiz')">Quiz Contest Registration</button>
   </div>
 </nav>
@@ -1053,14 +1300,154 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
-     PAGE: SENIOR SECONDARY (stub)
+     PAGE: SENIOR SECONDARY — HUB
 ═══════════════════════════════════════════════════════════ -->
 <section id="page-senior" class="page">
-  <div class="stub-card">
-    <div class="quicklink-icon">🎓</div>
-    <h2>Senior Secondary</h2>
-    <p>Content for our SS1–SS3 students is on the way. In the meantime, SS2 &amp; SS3 students can register for the Cornerstone Quiz Contest below.</p>
-    <button class="hero-btn hero-btn-primary" style="background:linear-gradient(135deg,var(--gold-2),var(--gold-3));color:var(--navy);" onclick="showPage('page-quiz')">Register for Quiz Contest</button>
+  <div class="ss-hero">
+    <div class="eyebrow">SS1 – SS3 &middot; Senior Secondary</div>
+    <h1>Senior Secondary Portal</h1>
+    <p>Three resource tracks built for our senior students — pick a department, watch practical dissections, or search past examination papers.</p>
+  </div>
+  <div class="ss-wrap">
+    <h2 class="section-heading">Explore the Portal</h2>
+    <p class="section-sub">Choose a track below, or use the Senior Secondary menu in the navigation bar at any time.</p>
+    <div class="quicklinks">
+      <button class="quicklink-card" onclick="showPage('page-senior-tri')">
+        <div class="quicklink-icon">🧭</div>
+        <h3>Departmental Tri-Feeder System</h3>
+        <p>Choose Science, Commercial or Arts, then explore your subject boards.</p>
+      </button>
+      <button class="quicklink-card" onclick="showPage('page-senior-stem')">
+        <div class="quicklink-icon">🔬</div>
+        <h3>Advanced STEM Laboratory Visualization</h3>
+        <p>Step-by-step video dissections of Physics, Chemistry &amp; Biology practicals for WAEC ATP.</p>
+      </button>
+      <button class="quicklink-card" onclick="showPage('page-senior-repo')">
+        <div class="quicklink-icon">📚</div>
+        <h3>National Examination Repository</h3>
+        <p>Search WAEC, NECO &amp; JAMB UTME papers from 2015 to present.</p>
+      </button>
+      <button class="quicklink-card" onclick="showPage('page-quiz')">
+        <div class="quicklink-icon">🏆</div>
+        <h3>Quiz Contest Registration</h3>
+        <p>SS2 &amp; SS3 students can register for the Cornerstone Quiz Contest here.</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: DEPARTMENTAL TRI-FEEDER SYSTEM
+═══════════════════════════════════════════════════════════ -->
+<section id="page-senior-tri" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">1 &middot; Senior Secondary</div>
+    <h1>Departmental Tri-Feeder System</h1>
+    <p>Choose your department to unlock the subject boards built for it — Science, Commercial or Arts.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-senior')">Back to Senior Secondary</a>
+
+    <!-- GATEKEEPER: shown until a path is chosen -->
+    <div id="triGatekeeper">
+      <h2 class="section-heading">Choose Your Department</h2>
+      <p class="section-sub">Your subject boards will be shown once you select a path below.</p>
+      <div class="path-grid">
+        <div class="path-card" onclick="chooseTriPath('SCI')">
+          <div class="path-icon">🧪</div>
+          <h3>Science</h3>
+          <p>Biology, Chemistry, Physics, Mathematics &amp; English Language.</p>
+        </div>
+        <div class="path-card" onclick="chooseTriPath('COM')">
+          <div class="path-icon">📊</div>
+          <h3>Commercial</h3>
+          <p>Commerce, Economics, Financial Accounting, Mathematics &amp; English Language.</p>
+        </div>
+        <div class="path-card" onclick="chooseTriPath('ART')">
+          <div class="path-icon">📜</div>
+          <h3>Arts</h3>
+          <p>English Literature, Government, C.R.K., Mathematics &amp; English Language.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBJECT BOARDS: shown after a path is chosen -->
+    <div id="triBoards" style="display:none;">
+      <div class="path-banner">
+        <div>
+          <div class="pb-label">Selected Department</div>
+          <div class="pb-name" id="triPathName">—</div>
+        </div>
+        <button onclick="resetTriPath()">Change Department</button>
+      </div>
+      <h2 class="section-heading">Subject Boards</h2>
+      <p class="section-sub">Notes, past questions and topic guides for each subject — added by the Registrar as they become ready.</p>
+      <div class="board-grid" id="triBoardGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: ADVANCED STEM LABORATORY VISUALIZATION
+═══════════════════════════════════════════════════════════ -->
+<section id="page-senior-stem" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">2 &middot; Senior Secondary</div>
+    <h1>Advanced STEM Laboratory Visualization</h1>
+    <p>Step-by-step video dissections of complex practicals in Physics, Chemistry &amp; Biology — built to satisfy WAEC Alternative-to-Practical requirements.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-senior')">Back to Senior Secondary</a>
+    <div class="stem-tabs" id="stemTabs"></div>
+    <div class="lab-grid" id="labGrid"></div>
+  </div>
+</section>
+
+<!-- Video/practical modal -->
+<div class="lab-modal-backdrop" id="labModalBackdrop" onclick="if(event.target===this)closeLabModal();">
+  <div class="lab-modal">
+    <div class="lab-modal-video" id="labModalVideo">Video not yet uploaded.</div>
+    <div class="lab-modal-body">
+      <h3 id="labModalTitle"></h3>
+      <p id="labModalDesc"></p>
+      <button class="lab-modal-close" onclick="closeLabModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: NATIONAL EXAMINATION REPOSITORY
+═══════════════════════════════════════════════════════════ -->
+<section id="page-senior-repo" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">3 &middot; Senior Secondary</div>
+    <h1>National Examination Repository</h1>
+    <p>A searchable archive of WAEC, NECO &amp; JAMB UTME papers from 2015 to the present, categorized by subject, year and topic.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-senior')">Back to Senior Secondary</a>
+    <div class="repo-filters">
+      <div class="rf-row">
+        <input type="text" id="repoSearch" placeholder="Search by topic, subject or keyword…" oninput="renderRepo()">
+      </div>
+      <div class="rf-row">
+        <select id="repoExamBody" onchange="renderRepo()">
+          <option value="">All Examination Bodies</option>
+          <option value="WAEC">WAEC</option>
+          <option value="NECO">NECO</option>
+          <option value="JAMB">JAMB UTME</option>
+        </select>
+        <select id="repoSubject" onchange="renderRepo()">
+          <option value="">All Subjects</option>
+        </select>
+        <select id="repoYear" onchange="renderRepo()">
+          <option value="">All Years</option>
+        </select>
+      </div>
+    </div>
+    <div class="repo-count" id="repoCount"></div>
+    <div class="repo-list" id="repoList"></div>
+    <div class="repo-note">📌 This repository is maintained by the Registrar. Papers are added and verified over time — if what you need isn't listed yet, check back soon or reach out via the contact details on the Home page.</div>
   </div>
 </section>
 
@@ -1460,6 +1847,7 @@ document.addEventListener('DOMContentLoaded', setSiteLogos);
 if(document.readyState !== 'loading'){ setSiteLogos(); }
 
 // ─── PAGE SWITCHER ──────────────────────────────────────────
+var SENIOR_PAGES = ['page-senior','page-senior-tri','page-senior-stem','page-senior-repo'];
 function showPage(pageId){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   var target = document.getElementById(pageId);
@@ -1467,6 +1855,9 @@ function showPage(pageId){
   document.querySelectorAll('.nav-tab').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-page') === pageId);
   });
+  var seniorTrigger = document.getElementById('seniorNavTrigger');
+  if(seniorTrigger) seniorTrigger.classList.toggle('active', SENIOR_PAGES.indexOf(pageId) !== -1);
+  closeSeniorDropdown();
   // The nav floats transparently over the full-bleed hero photo only on
   // the Home page; every other page gets the solid navy bar so its
   // white text stays legible over plain content.
@@ -1479,7 +1870,216 @@ function showPage(pageId){
   if(pageId === 'page-quiz' && typeof backToQuizMenu === 'function'){
     backToQuizMenu();
   }
+  if(pageId === 'page-senior-stem' && typeof renderLabGrid === 'function'){
+    renderLabGrid();
+  }
+  if(pageId === 'page-senior-repo' && typeof initRepo === 'function'){
+    initRepo();
+  }
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ─── SENIOR SECONDARY: NAV DROPDOWN ─────────────────────────
+function toggleSeniorDropdown(evt){
+  if(evt) evt.stopPropagation();
+  var dd = document.getElementById('seniorNavDropdown');
+  var isOpen = dd.classList.contains('open');
+  if(isOpen){
+    closeSeniorDropdown();
+  } else {
+    dd.classList.add('open');
+  }
+}
+function closeSeniorDropdown(){
+  var dd = document.getElementById('seniorNavDropdown');
+  if(dd) dd.classList.remove('open');
+}
+function goSenior(pageId){
+  closeSeniorDropdown();
+  showPage(pageId);
+}
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('seniorNavDropdown');
+  if(dd && dd.classList.contains('open') && !dd.contains(e.target)){
+    closeSeniorDropdown();
+  }
+});
+
+// ─── DEPARTMENTAL TRI-FEEDER SYSTEM ──────────────────────────
+// Subject boards reuse the same field-of-study taxonomy as quiz
+// registration (FIELD_LABEL / ANSWER_SHEET_SUBJECTS, defined below).
+// Registrar can mark a board "available" by adding a `url` to the
+// matching subject entry once resource notes/past questions are ready.
+var TRI_ICONS = {SCI:'🧪', COM:'📊', ART:'📜'};
+function chooseTriPath(fieldCode){
+  document.getElementById('triGatekeeper').style.display = 'none';
+  var boards = document.getElementById('triBoards');
+  boards.style.display = 'block';
+  document.getElementById('triPathName').textContent = FIELD_LABEL[fieldCode] + ' Department';
+  var subjects = ANSWER_SHEET_SUBJECTS[fieldCode] || [];
+  var grid = document.getElementById('triBoardGrid');
+  grid.innerHTML = subjects.map(function(s){
+    return '<div class="board-card">'
+      + '<div class="bc-top"><div class="bc-icon">' + (TRI_ICONS[fieldCode] || '📘') + '</div>'
+      + '<div><h4>' + s.name + '</h4><div class="bc-count">' + s.count + ' quiz questions in this field</div></div></div>'
+      + '<span class="bc-status">Notes coming soon</span>'
+      + '</div>';
+  }).join('');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function resetTriPath(){
+  document.getElementById('triBoards').style.display = 'none';
+  document.getElementById('triGatekeeper').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ─── ADVANCED STEM LABORATORY VISUALIZATION ──────────────────
+// Each entry is a WAEC-syllabus practical. `video` is left blank until
+// the Registrar records/uploads the dissection — the modal shows a
+// "coming soon" state automatically when it's empty. To add a video,
+// paste a hosted URL (e.g. YouTube embed or MP4 link) into `video`.
+var LAB_SUBJECTS = ['Physics','Chemistry','Biology'];
+var LAB_PRACTICALS = {
+  Physics: [
+    { title:'The Simple Pendulum', desc:'Determining acceleration due to gravity by measuring period against pendulum length.', atp:'WAEC ATP 1', video:'' },
+    { title:'Refraction Through a Glass Block', desc:'Tracing light rays to find the refractive index of a rectangular glass block.', atp:'WAEC ATP 1', video:'' },
+    { title:'The Metre Bridge', desc:'Using a metre bridge (Wheatstone bridge) to determine unknown resistance.', atp:'WAEC ATP 1', video:'' },
+    { title:'Focal Length of a Convex Lens', desc:'Locating images formed by a converging lens to calculate its focal length.', atp:'WAEC ATP 2', video:'' },
+    { title:'Verifying the Principle of Moments', desc:'Balancing a metre rule under multiple forces to confirm the law of moments.', atp:'WAEC ATP 2', video:'' }
+  ],
+  Chemistry: [
+    { title:'Qualitative Analysis — Cation Tests', desc:'Identifying cations (e.g. Fe²⁺, Fe³⁺, Pb²⁺, Zn²⁺) through systematic flame and reagent tests.', atp:'WAEC ATP 1', video:'' },
+    { title:'Qualitative Analysis — Anion Tests', desc:'Identifying anions (e.g. CO₃²⁻, SO₄²⁻, Cl⁻, NO₃⁻) using standard confirmatory tests.', atp:'WAEC ATP 1', video:'' },
+    { title:'Acid–Base Volumetric Titration', desc:'Standardising a solution and titrating to a colour-change end point to find unknown concentration.', atp:'WAEC ATP 2', video:'' },
+    { title:'Redox Titration', desc:'Using a redox indicator or self-indicating titrant to determine concentration by oxidation–reduction.', atp:'WAEC ATP 2', video:'' },
+    { title:'Separation Techniques', desc:'Demonstrating filtration, decantation and simple distillation to separate mixtures.', atp:'WAEC ATP 1', video:'' }
+  ],
+  Biology: [
+    { title:'Food Substance Identification Tests', desc:'Testing specimens for starch, reducing sugars, protein and fats/oils using standard reagents.', atp:'WAEC ATP 1', video:'' },
+    { title:'External Features of a Named Specimen', desc:'Observing and drawing the external features of a typical named plant or animal specimen.', atp:'WAEC ATP 1', video:'' },
+    { title:'Osmosis in Plant Tissue', desc:'Demonstrating osmosis using potato/yam cylinders in salt and water solutions of varying concentration.', atp:'WAEC ATP 2', video:'' },
+    { title:'Enzyme Action on Starch', desc:'Investigating the effect of temperature/pH on amylase activity using iodine testing.', atp:'WAEC ATP 2', video:'' },
+    { title:'Floral/Leaf Structure Dissection', desc:'Dissecting and labelling the parts of a named flower or leaf to show internal arrangement.', atp:'WAEC ATP 1', video:'' }
+  ]
+};
+var currentLabSubject = 'Physics';
+function renderStemTabs(){
+  var tabs = document.getElementById('stemTabs');
+  if(!tabs) return;
+  tabs.innerHTML = LAB_SUBJECTS.map(function(s){
+    return '<button class="stem-tab' + (s === currentLabSubject ? ' active' : '') + '" onclick="selectLabSubject(\'' + s + '\')">' + s + '</button>';
+  }).join('');
+}
+function selectLabSubject(subject){
+  currentLabSubject = subject;
+  renderStemTabs();
+  renderLabGrid();
+}
+function renderLabGrid(){
+  renderStemTabs();
+  var grid = document.getElementById('labGrid');
+  if(!grid) return;
+  var list = LAB_PRACTICALS[currentLabSubject] || [];
+  grid.innerHTML = list.map(function(p, i){
+    return '<div class="lab-card" onclick="openLabModal(\'' + currentLabSubject + '\',' + i + ')">'
+      + '<div class="lab-thumb"><div class="lab-badge">' + currentLabSubject + '</div><div class="play-btn">▶</div></div>'
+      + '<div class="lab-body"><h4>' + p.title + '</h4><p>' + p.desc + '</p><span class="lab-atp">' + p.atp + '</span></div>'
+      + '</div>';
+  }).join('');
+}
+function openLabModal(subject, index){
+  var p = LAB_PRACTICALS[subject][index];
+  document.getElementById('labModalTitle').textContent = p.title;
+  document.getElementById('labModalDesc').textContent = p.desc;
+  var videoBox = document.getElementById('labModalVideo');
+  if(p.video){
+    videoBox.innerHTML = '<video src="' + p.video + '" controls autoplay></video>';
+  } else {
+    videoBox.innerHTML = 'Video dissection not yet uploaded — the Registrar is preparing this recording.';
+  }
+  document.getElementById('labModalBackdrop').classList.add('show');
+}
+function closeLabModal(){
+  document.getElementById('labModalBackdrop').classList.remove('show');
+  document.getElementById('labModalVideo').innerHTML = '';
+}
+
+// ─── NATIONAL EXAMINATION REPOSITORY ─────────────────────────
+// Sample structure only — populate REPO_PAPERS with real entries as the
+// Registrar sources and verifies papers. Each entry: examBody, subject,
+// year, topic, and an optional `url` (left blank = "Not yet uploaded").
+var REPO_PAPERS = [
+  { examBody:'WAEC', subject:'Mathematics', year:2025, topic:'Objective & Theory — Core Mathematics', url:'' },
+  { examBody:'WAEC', subject:'English Language', year:2025, topic:'Objective, Essay & Comprehension', url:'' },
+  { examBody:'WAEC', subject:'Physics', year:2024, topic:'Theory Paper 2 & Objective', url:'' },
+  { examBody:'WAEC', subject:'Chemistry', year:2024, topic:'Alternative to Practical', url:'' },
+  { examBody:'WAEC', subject:'Biology', year:2023, topic:'Alternative to Practical', url:'' },
+  { examBody:'NECO', subject:'Mathematics', year:2025, topic:'Objective & Essay', url:'' },
+  { examBody:'NECO', subject:'Economics', year:2024, topic:'Objective, Essay & Data Response', url:'' },
+  { examBody:'NECO', subject:'Government', year:2023, topic:'Objective & Essay', url:'' },
+  { examBody:'JAMB', subject:'Use of English', year:2026, topic:'UTME Comprehension & Lexis', url:'' },
+  { examBody:'JAMB', subject:'Mathematics', year:2026, topic:'UTME Practice Questions', url:'' },
+  { examBody:'JAMB', subject:'Physics', year:2025, topic:'UTME Practice Questions', url:'' },
+  { examBody:'JAMB', subject:'Commerce', year:2025, topic:'UTME Practice Questions', url:'' },
+  { examBody:'WAEC', subject:'Financial Accounting', year:2022, topic:'Objective & Theory', url:'' },
+  { examBody:'WAEC', subject:'Christian Religious Knowledge', year:2021, topic:'Objective & Essay', url:'' },
+  { examBody:'NECO', subject:'English Literature', year:2020, topic:'Prose, Drama & Poetry', url:'' },
+  { examBody:'WAEC', subject:'Commerce', year:2019, topic:'Objective & Theory', url:'' },
+  { examBody:'WAEC', subject:'Mathematics', year:2018, topic:'Objective & Theory — Core Mathematics', url:'' },
+  { examBody:'NECO', subject:'Biology', year:2017, topic:'Objective, Essay & Alternative to Practical', url:'' },
+  { examBody:'WAEC', subject:'Chemistry', year:2016, topic:'Objective & Theory', url:'' },
+  { examBody:'JAMB', subject:'Chemistry', year:2015, topic:'UTME Practice Questions', url:'' }
+];
+var repoInitialized = false;
+function initRepo(){
+  if(repoInitialized) return;
+  repoInitialized = true;
+  var subjectSel = document.getElementById('repoSubject');
+  var yearSel = document.getElementById('repoYear');
+  var subjects = Array.from(new Set(REPO_PAPERS.map(function(p){ return p.subject; }))).sort();
+  subjects.forEach(function(s){
+    var opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    subjectSel.appendChild(opt);
+  });
+  var years = Array.from(new Set(REPO_PAPERS.map(function(p){ return p.year; }))).sort(function(a,b){ return b-a; });
+  years.forEach(function(y){
+    var opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    yearSel.appendChild(opt);
+  });
+  renderRepo();
+}
+function renderRepo(){
+  var q = (document.getElementById('repoSearch').value || '').trim().toLowerCase();
+  var examBody = document.getElementById('repoExamBody').value;
+  var subject = document.getElementById('repoSubject').value;
+  var year = document.getElementById('repoYear').value;
+  var results = REPO_PAPERS.filter(function(p){
+    if(examBody && p.examBody !== examBody) return false;
+    if(subject && p.subject !== subject) return false;
+    if(year && String(p.year) !== year) return false;
+    if(q){
+      var hay = (p.subject + ' ' + p.topic + ' ' + p.examBody + ' ' + p.year).toLowerCase();
+      if(hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort(function(a,b){ return b.year - a.year; });
+  document.getElementById('repoCount').textContent = results.length + ' paper' + (results.length === 1 ? '' : 's') + ' found';
+  var list = document.getElementById('repoList');
+  if(!results.length){
+    list.innerHTML = '<div class="repo-empty">No papers match your search yet. Try clearing a filter.</div>';
+    return;
+  }
+  list.innerHTML = results.map(function(p){
+    var available = !!p.url;
+    return '<div class="repo-row">'
+      + '<span class="rr-badge">' + p.examBody + '</span>'
+      + '<div class="rr-main"><div class="rr-topic">' + p.subject + ' — ' + p.topic + '</div>'
+      + '<div class="rr-meta">' + p.year + '</div></div>'
+      + '<span class="rr-status' + (available ? ' available' : '') + '">' + (available ? 'Available' : 'Not yet uploaded') + '</span>'
+      + '</div>';
+  }).join('');
 }
 
 // ─── ANNOUNCEMENTS TICKER ───────────────────────────────────
