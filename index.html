@@ -1020,6 +1020,35 @@
   .ss-hero h1{font-family:'Fraunces',serif;color:#fff;font-size:30px;font-weight:600;margin-bottom:10px;}
   .ss-hero p{color:rgba(255,255,255,0.78);font-size:14px;max-width:520px;margin:0 auto;line-height:1.6;}
   .ss-wrap{max-width:960px;margin:0 auto;padding:36px 20px 60px;}
+  .ss-quicklinks{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:16px;margin-bottom:30px;
+  }
+  .ss-quicklink-card{
+    appearance:none;text-align:left;cursor:pointer;
+    background:linear-gradient(150deg,var(--navy) 0%,var(--navy-2) 60%,var(--navy-3) 130%);
+    border:1px solid rgba(212,160,23,0.25);
+    border-radius:var(--radius-lg);padding:24px 20px;
+    box-shadow:var(--shadow-md);transition:var(--transition);
+    display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
+  }
+  .ss-quicklink-card::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(212,160,23,0.5),transparent);
+    height:1px;top:auto;bottom:0;
+  }
+  .ss-quicklink-card:hover{
+    transform:translateY(-4px);box-shadow:var(--shadow-lg);
+    border-color:var(--gold-2);
+  }
+  .ss-quicklink-card .ql-icon{
+    width:42px;height:42px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    background:linear-gradient(135deg,var(--gold-2),var(--gold-3));
+    color:var(--navy);
+  }
+  .ss-quicklink-card h3{font-family:'Fraunces',serif;font-size:15.5px;color:#fff;font-weight:600;}
+  .ss-quicklink-card p{font-size:12.5px;color:rgba(255,255,255,0.68);line-height:1.45;}
   .ss-back{
     display:inline-flex;align-items:center;gap:6px;
     font-size:12.5px;font-weight:600;color:var(--navy-2);cursor:pointer;
@@ -1079,6 +1108,28 @@
     display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
     padding:4px 10px;border-radius:99px;background:var(--error-bg);color:var(--error);
   }
+
+  /* Junior Secondary — resource-type toggle filters */
+  .resource-toggles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+  .resource-toggle{
+    appearance:none;cursor:pointer;background:var(--paper);border:1.5px solid var(--rule);
+    color:var(--ink-soft);font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;
+    padding:10px 18px;border-radius:99px;transition:var(--transition);display:inline-flex;align-items:center;gap:7px;
+  }
+  .resource-toggle:hover{border-color:var(--gold-2);}
+  .resource-toggle.active{
+    background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-color:transparent;
+  }
+  .resource-toggle .rt-check{
+    width:14px;height:14px;border-radius:4px;border:1.5px solid currentColor;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;
+  }
+  .resource-toggle.active .rt-check{background:rgba(255,255,255,0.25);}
+  .board-card .bc-resources{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+  .board-card .bc-resource-row{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--ink-soft);
+  }
+  .board-card .bc-resource-row .bc-status{padding:3px 9px;font-size:9.5px;}
 
   /* Advanced STEM Laboratory Visualization */
   .stem-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
@@ -1204,7 +1255,29 @@
       <span>Cornerstone Quiz Contest</span>
     </div>
     <button class="nav-tab active" data-page="page-home" onclick="showPage('page-home')">Home</button>
-    <button class="nav-tab" data-page="page-junior" onclick="showPage('page-junior')">Junior Secondary</button>
+    <div class="nav-dropdown" id="juniorNavDropdown">
+      <button class="nav-dropdown-trigger" data-page="page-junior" id="juniorNavTrigger" onclick="toggleJuniorDropdown(event)">
+        Junior Secondary <span class="caret"></span>
+      </button>
+      <div class="nav-dropdown-menu" id="juniorNavMenu">
+        <button class="nav-dropdown-item" onclick="goJunior('page-junior')">
+          <div class="dd-num">•</div>
+          <div><div class="dd-title">Junior Secondary Portal</div><div class="dd-sub">Overview of resources for JSS1–JSS3.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goJunior('page-junior-jss1')">
+          <div class="dd-num">1</div>
+          <div><div class="dd-title">JSS 1</div><div class="dd-sub">Subject boards and resources for JSS1 students.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goJunior('page-junior-jss2')">
+          <div class="dd-num">2</div>
+          <div><div class="dd-title">JSS 2</div><div class="dd-sub">Subject boards and resources for JSS2 students.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goJunior('page-junior-jss3')">
+          <div class="dd-num">3</div>
+          <div><div class="dd-title">JSS 3</div><div class="dd-sub">Subject boards and resources for JSS3 students.</div></div>
+        </button>
+      </div>
+    </div>
     <div class="nav-dropdown" id="seniorNavDropdown">
       <button class="nav-dropdown-trigger" data-page="page-senior" id="seniorNavTrigger" onclick="toggleSeniorDropdown(event)">
         Senior Secondary <span class="caret"></span>
@@ -1288,14 +1361,76 @@
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════
-     PAGE: JUNIOR SECONDARY (stub)
+     PAGE: JUNIOR SECONDARY — HUB
 ═══════════════════════════════════════════════════════════ -->
 <section id="page-junior" class="page">
-  <div class="stub-card">
-    <div class="quicklink-icon">📘</div>
-    <h2>Junior Secondary</h2>
-    <p>Content for our JS1–JS3 students is on the way. Check back soon for study resources and announcements tailored to junior secondary learners.</p>
-    <button class="hero-btn hero-btn-primary" style="background:linear-gradient(135deg,var(--navy),var(--navy-3));color:#fff;" onclick="showPage('page-home')">Back to Home</button>
+  <div class="ss-hero">
+    <div class="eyebrow">JSS1 – JSS3 &middot; Junior Secondary</div>
+    <h1>Junior Secondary Portal</h1>
+    <p>Resources, subject boards and study material for our junior secondary learners — choose your class below, or use the Junior Secondary menu in the navigation bar at any time.</p>
+  </div>
+  <div class="ss-wrap">
+    <h2 class="section-heading">Choose Your Class</h2>
+    <p class="section-sub">Each class has its own subject grid with Video Lessons, PDF Notes and Past Questions.</p>
+    <div class="ss-quicklinks">
+      <button class="ss-quicklink-card" onclick="showPage('page-junior-jss1')">
+        <div class="ql-icon">1️⃣</div>
+        <h3>JSS 1</h3>
+        <p>Core subject boards and resources for JSS1 students.</p>
+      </button>
+      <button class="ss-quicklink-card" onclick="showPage('page-junior-jss2')">
+        <div class="ql-icon">2️⃣</div>
+        <h3>JSS 2</h3>
+        <p>Core subject boards and resources for JSS2 students.</p>
+      </button>
+      <button class="ss-quicklink-card" onclick="showPage('page-junior-jss3')">
+        <div class="ql-icon">3️⃣</div>
+        <h3>JSS 3</h3>
+        <p>Core subject boards and resources for JSS3 students.</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: JUNIOR SECONDARY — JSS1 / JSS2 / JSS3 LANDING PAGES
+═══════════════════════════════════════════════════════════ -->
+<section id="page-junior-jss1" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">Junior Secondary</div>
+    <h1>JSS 1</h1>
+    <p>Core subject boards for JSS1 — filter by resource type to see what's available for each subject.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-junior')">Back to Junior Secondary</a>
+    <div class="resource-toggles" id="juniorFiltersJSS1"></div>
+    <div class="board-grid" id="juniorGridJSS1"></div>
+  </div>
+</section>
+
+<section id="page-junior-jss2" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">Junior Secondary</div>
+    <h1>JSS 2</h1>
+    <p>Core subject boards for JSS2 — filter by resource type to see what's available for each subject.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-junior')">Back to Junior Secondary</a>
+    <div class="resource-toggles" id="juniorFiltersJSS2"></div>
+    <div class="board-grid" id="juniorGridJSS2"></div>
+  </div>
+</section>
+
+<section id="page-junior-jss3" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">Junior Secondary</div>
+    <h1>JSS 3</h1>
+    <p>Core subject boards for JSS3 — filter by resource type to see what's available for each subject.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-junior')">Back to Junior Secondary</a>
+    <div class="resource-toggles" id="juniorFiltersJSS3"></div>
+    <div class="board-grid" id="juniorGridJSS3"></div>
   </div>
 </section>
 
@@ -1311,24 +1446,24 @@
   <div class="ss-wrap">
     <h2 class="section-heading">Explore the Portal</h2>
     <p class="section-sub">Choose a track below, or use the Senior Secondary menu in the navigation bar at any time.</p>
-    <div class="quicklinks">
-      <button class="quicklink-card" onclick="showPage('page-senior-tri')">
-        <div class="quicklink-icon">🧭</div>
+    <div class="ss-quicklinks">
+      <button class="ss-quicklink-card" onclick="showPage('page-senior-tri')">
+        <div class="ql-icon">🧭</div>
         <h3>Departmental Tri-Feeder System</h3>
         <p>Choose Science, Commercial or Arts, then explore your subject boards.</p>
       </button>
-      <button class="quicklink-card" onclick="showPage('page-senior-stem')">
-        <div class="quicklink-icon">🔬</div>
+      <button class="ss-quicklink-card" onclick="showPage('page-senior-stem')">
+        <div class="ql-icon">🔬</div>
         <h3>Advanced STEM Laboratory Visualization</h3>
         <p>Step-by-step video dissections of Physics, Chemistry &amp; Biology practicals for WAEC ATP.</p>
       </button>
-      <button class="quicklink-card" onclick="showPage('page-senior-repo')">
-        <div class="quicklink-icon">📚</div>
+      <button class="ss-quicklink-card" onclick="showPage('page-senior-repo')">
+        <div class="ql-icon">📚</div>
         <h3>National Examination Repository</h3>
         <p>Search WAEC, NECO &amp; JAMB UTME papers from 2015 to present.</p>
       </button>
-      <button class="quicklink-card" onclick="showPage('page-quiz')">
-        <div class="quicklink-icon">🏆</div>
+      <button class="ss-quicklink-card" onclick="showPage('page-quiz')">
+        <div class="ql-icon">🏆</div>
         <h3>Quiz Contest Registration</h3>
         <p>SS2 &amp; SS3 students can register for the Cornerstone Quiz Contest here.</p>
       </button>
@@ -1848,6 +1983,7 @@ if(document.readyState !== 'loading'){ setSiteLogos(); }
 
 // ─── PAGE SWITCHER ──────────────────────────────────────────
 var SENIOR_PAGES = ['page-senior','page-senior-tri','page-senior-stem','page-senior-repo'];
+var JUNIOR_PAGES = ['page-junior','page-junior-jss1','page-junior-jss2','page-junior-jss3'];
 function showPage(pageId){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   var target = document.getElementById(pageId);
@@ -1858,6 +1994,9 @@ function showPage(pageId){
   var seniorTrigger = document.getElementById('seniorNavTrigger');
   if(seniorTrigger) seniorTrigger.classList.toggle('active', SENIOR_PAGES.indexOf(pageId) !== -1);
   closeSeniorDropdown();
+  var juniorTrigger = document.getElementById('juniorNavTrigger');
+  if(juniorTrigger) juniorTrigger.classList.toggle('active', JUNIOR_PAGES.indexOf(pageId) !== -1);
+  closeJuniorDropdown();
   // The nav floats transparently over the full-bleed hero photo only on
   // the Home page; every other page gets the solid navy bar so its
   // white text stays legible over plain content.
@@ -1875,6 +2014,9 @@ function showPage(pageId){
   }
   if(pageId === 'page-senior-repo' && typeof initRepo === 'function'){
     initRepo();
+  }
+  if(JUNIOR_LEVELS.indexOf(JUNIOR_PAGE_TO_LEVEL[pageId]) !== -1 && typeof renderJuniorPage === 'function'){
+    renderJuniorPage(JUNIOR_PAGE_TO_LEVEL[pageId]);
   }
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -1904,6 +2046,105 @@ document.addEventListener('click', function(e){
     closeSeniorDropdown();
   }
 });
+
+// ─── JUNIOR SECONDARY: NAV DROPDOWN ─────────────────────────
+function toggleJuniorDropdown(evt){
+  if(evt) evt.stopPropagation();
+  var dd = document.getElementById('juniorNavDropdown');
+  var isOpen = dd.classList.contains('open');
+  if(isOpen){
+    closeJuniorDropdown();
+  } else {
+    dd.classList.add('open');
+  }
+}
+function closeJuniorDropdown(){
+  var dd = document.getElementById('juniorNavDropdown');
+  if(dd) dd.classList.remove('open');
+}
+function goJunior(pageId){
+  closeJuniorDropdown();
+  showPage(pageId);
+}
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('juniorNavDropdown');
+  if(dd && dd.classList.contains('open') && !dd.contains(e.target)){
+    closeJuniorDropdown();
+  }
+});
+
+// ─── JUNIOR SECONDARY: SUBJECT GRID + RESOURCE-TYPE FILTERS ──
+// Core subjects shared across JSS1–JSS3. Registrar can mark a resource
+// "available" per subject/level by editing JUNIOR_RESOURCES below and
+// adding a `url`; until then every resource shows "Coming soon".
+var JUNIOR_LEVELS = ['JSS1','JSS2','JSS3'];
+var JUNIOR_PAGE_TO_LEVEL = {
+  'page-junior-jss1':'JSS1',
+  'page-junior-jss2':'JSS2',
+  'page-junior-jss3':'JSS3'
+};
+var JUNIOR_SUBJECTS = [
+  { key:'math',  name:'Mathematics',        icon:'➗' },
+  { key:'eng',   name:'English Language',   icon:'📖' },
+  { key:'basci', name:'Basic Science',      icon:'🔬' },
+  { key:'batec', name:'Basic Technology',   icon:'🛠️' },
+  { key:'civic', name:'Civic Education',    icon:'🏛️' },
+  { key:'socst', name:'Social Studies',     icon:'🌍' },
+  { key:'busst', name:'Business Studies',   icon:'💼' },
+  { key:'agric', name:'Agricultural Science', icon:'🌾' },
+  { key:'crk',   name:'C.R.K. / I.R.K.',    icon:'📜' },
+  { key:'compst',name:'Computer Studies',   icon:'💻' },
+  { key:'french',name:'French',             icon:'🇫🇷' },
+  { key:'phe',   name:'Physical & Health Education', icon:'🏃' }
+];
+// Resource types shown as toggle filters; `url` left blank until the
+// Registrar uploads the matching resource for a subject/level.
+var JUNIOR_RESOURCE_TYPES = [
+  { key:'video', label:'Video Lessons',   icon:'🎬' },
+  { key:'pdf',   label:'PDF Notes',       icon:'📄' },
+  { key:'past',  label:'Past Questions',  icon:'📝' }
+];
+var JUNIOR_RESOURCES = {}; // JUNIOR_RESOURCES['JSS1']['math'] = { video:'', pdf:'', past:'' }
+var juniorActiveFilters = { JSS1:{video:true,pdf:true,past:true}, JSS2:{video:true,pdf:true,past:true}, JSS3:{video:true,pdf:true,past:true} };
+
+function toggleJuniorFilter(level, type){
+  juniorActiveFilters[level][type] = !juniorActiveFilters[level][type];
+  renderJuniorPage(level);
+}
+function renderJuniorFilters(level){
+  var box = document.getElementById('juniorFilters' + level);
+  if(!box) return;
+  box.innerHTML = JUNIOR_RESOURCE_TYPES.map(function(rt){
+    var active = juniorActiveFilters[level][rt.key];
+    return '<button class="resource-toggle' + (active ? ' active' : '') + '" onclick="toggleJuniorFilter(\'' + level + '\',\'' + rt.key + '\')">'
+      + '<span class="rt-check">' + (active ? '✓' : '') + '</span>' + rt.icon + ' ' + rt.label
+      + '</button>';
+  }).join('');
+}
+function renderJuniorGrid(level){
+  var grid = document.getElementById('juniorGrid' + level);
+  if(!grid) return;
+  var filters = juniorActiveFilters[level];
+  var levelResources = JUNIOR_RESOURCES[level] || {};
+  grid.innerHTML = JUNIOR_SUBJECTS.map(function(s){
+    var res = levelResources[s.key] || {};
+    var rows = JUNIOR_RESOURCE_TYPES.filter(function(rt){ return filters[rt.key]; }).map(function(rt){
+      var available = !!res[rt.key];
+      return '<div class="bc-resource-row"><span>' + rt.icon + ' ' + rt.label + '</span>'
+        + '<span class="bc-status"' + (available ? ' style="background:var(--success-bg);color:var(--success);"' : '') + '>'
+        + (available ? 'Available' : 'Coming soon') + '</span></div>';
+    }).join('');
+    return '<div class="board-card">'
+      + '<div class="bc-top"><div class="bc-icon">' + s.icon + '</div>'
+      + '<div><h4>' + s.name + '</h4><div class="bc-count">' + level + ' core subject</div></div></div>'
+      + '<div class="bc-resources">' + (rows || '<div class="bc-resource-row"><span>No resource type selected</span></div>') + '</div>'
+      + '</div>';
+  }).join('');
+}
+function renderJuniorPage(level){
+  renderJuniorFilters(level);
+  renderJuniorGrid(level);
+}
 
 // ─── DEPARTMENTAL TRI-FEEDER SYSTEM ──────────────────────────
 // Subject boards reuse the same field-of-study taxonomy as quiz
