@@ -1049,6 +1049,42 @@
     <div class="subtitle-reg">Candidate Registration</div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       QUIZ MENU (default view when Register for Quiz is opened)
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="quizMenuView">
+    <h2 class="section-heading">Registration Menu</h2>
+    <p class="section-sub">Choose an option below to continue.</p>
+    <div class="quicklinks">
+      <button class="quicklink-card" onclick="openQuizSection('fresh')">
+        <div class="quicklink-icon">📝</div>
+        <h3>Fresh Registration</h3>
+        <p>Start a brand-new registration for the Cornerstone Quiz Contest.</p>
+      </button>
+      <button class="quicklink-card" onclick="openQuizSection('continue')">
+        <div class="quicklink-icon">↻</div>
+        <h3>Continue Registration</h3>
+        <p>Resume a registration you started but didn't finish, on this device.</p>
+      </button>
+      <button class="quicklink-card" onclick="openQuizSection('status')">
+        <div class="quicklink-icon">🔎</div>
+        <h3>Check my Status</h3>
+        <p>Look up your registration status using your Application ID.</p>
+      </button>
+      <button class="quicklink-card" onclick="openQuizSection('admin')">
+        <div class="quicklink-icon">🔐</div>
+        <h3>Registrar View</h3>
+        <p>Restricted access for the Registrar to review submissions.</p>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FRESH / CONTINUE REGISTRATION FORM
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="quizFormView" style="display:none;">
+  <div class="foot-link" style="margin:0 0 20px;"><a onclick="backToQuizMenu()">&larr; Back to Registration Menu</a></div>
+
   <div class="countdown-banner" id="countdownBanner" style="display:none;">
     <div class="countdown-label" id="countdownLabel">Registration closes in</div>
     <div class="countdown-units">
@@ -1061,6 +1097,13 @@
   </div>
 
   <div class="stepper" id="stepper"></div>
+
+  <div class="card" id="noDraftCard" style="display:none;">
+    <div class="closed-icon">📭</div>
+    <h2>No Saved Registration Found</h2>
+    <p class="desc">We couldn't find a registration in progress on this device. You can start a fresh registration instead.</p>
+    <p class="desc" style="margin-top:18px;"><button class="btn-primary" onclick="openQuizSection('fresh')">Start Fresh Registration</button></p>
+  </div>
 
   <div class="card" id="closedCard" style="display:none;">
     <div class="closed-icon" id="closedIcon">&#128274;</div>
@@ -1263,24 +1306,56 @@
       <button class="btn-primary" id="submitBtn" style="display:none;" disabled>Submit Registration</button>
     </div>
   </div>
+  </div>
 
-  <div class="foot-link"><a id="adminToggle">Registrar View — see all submitted registrations</a></div>
-  <div class="lock-err" id="adminLockNotice" style="max-width:440px;margin:8px auto 0;"></div>
-
-  <div class="admin-panel" id="adminPanel">
-    <h3>Registrar View</h3>
-    <p class="hint">All registrations recorded on this device/session are shown here (data is shared across everyone using this form). Use this as your working register alongside emailed notifications.</p>
-
-    <div class="lock-gate" id="lockGate">
-      <p>This area is restricted. Enter the Registrar passcode to view submitted registrations.</p>
-      <div class="lock-row">
-        <input type="password" id="passcodeInput" placeholder="Enter passcode">
-        <button class="btn-primary" id="passcodeSubmit">Unlock</button>
+  <!-- ═══════════════════════════════════════════════════════════
+       CHECK MY STATUS
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="quizStatusView" style="display:none;">
+    <div class="foot-link" style="margin:0 0 20px;"><a onclick="backToQuizMenu()">&larr; Back to Registration Menu</a></div>
+    <div class="card" id="statusCard">
+      <h2>Check my Status</h2>
+      <p class="desc">Enter your Application ID and the phone number used at registration to check your current status.</p>
+      <div class="field" data-field="statusAppId">
+        <label>Application ID<span class="req">*</span></label>
+        <input type="text" id="statusAppId" placeholder="e.g. CQC/2026/HPG/S2/SCI/001">
+        <div class="err-msg">Please enter your Application ID.</div>
       </div>
-      <div class="lock-err" id="passcodeErr">Incorrect passcode. Please try again.</div>
+      <div class="field" data-field="statusPhone">
+        <label>Phone Number<span class="req">*</span></label>
+        <input type="tel" id="statusPhone" placeholder="e.g. 0803 000 0000">
+        <div class="err-msg">Please enter the phone number used at registration.</div>
+      </div>
+      <div class="lock-err" id="statusErr" style="max-width:none;"></div>
+      <div class="nav-btns" style="justify-content:flex-end;">
+        <button class="btn-primary" id="statusLookupBtn">Check Status</button>
+      </div>
+      <div id="statusResult"></div>
     </div>
+  </div>
 
-    <div id="adminContent" style="display:none;"><div class="empty-state">Loading registrations…</div></div>
+  <!-- ═══════════════════════════════════════════════════════════
+       REGISTRAR VIEW
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="quizAdminView" style="display:none;">
+    <div class="foot-link" style="margin:0 0 20px;"><a onclick="backToQuizMenu()">&larr; Back to Registration Menu</a></div>
+    <div class="lock-err" id="adminLockNotice" style="max-width:440px;margin:0 auto 12px;"></div>
+
+    <div class="admin-panel" id="adminPanel">
+      <h3>Registrar View</h3>
+      <p class="hint">All registrations recorded on this device/session are shown here (data is shared across everyone using this form). Use this as your working register alongside emailed notifications.</p>
+
+      <div class="lock-gate" id="lockGate">
+        <p>This area is restricted. Enter the Registrar passcode to view submitted registrations.</p>
+        <div class="lock-row">
+          <input type="password" id="passcodeInput" placeholder="Enter passcode">
+          <button class="btn-primary" id="passcodeSubmit">Unlock</button>
+        </div>
+        <div class="lock-err" id="passcodeErr">Incorrect passcode. Please try again.</div>
+      </div>
+
+      <div id="adminContent" style="display:none;"><div class="empty-state">Loading registrations…</div></div>
+    </div>
   </div>
 
 </div>
@@ -1365,6 +1440,13 @@ function showPage(pageId){
   document.querySelectorAll('.nav-tab').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-page') === pageId);
   });
+  // Arriving at the Quiz Contest Registration page (from the nav tab, the
+  // "Register for Quiz" hero button, or any quicklink) should always land on
+  // the 4-option registration menu, not mid-way inside a subview left over
+  // from a previous visit.
+  if(pageId === 'page-quiz' && typeof backToQuizMenu === 'function'){
+    backToQuizMenu();
+  }
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -1817,6 +1899,221 @@ function render(){
   document.getElementById('submitBtn').style.display = currentStep === 3 ? 'inline-block' : 'none';
 }
 
+// ═══════════════════════════════════════════════════════════
+// REGISTRATION MENU — Fresh / Continue / Check Status / Registrar
+// ═══════════════════════════════════════════════════════════
+// "Continue Registration" resumes an in-progress (not yet submitted) form
+// on the SAME device/browser. Progress is autosaved to localStorage as the
+// candidate types or moves between steps, and is cleared the moment a
+// registration is actually submitted (see the submitBtn handler) since at
+// that point there is nothing left to "continue".
+const QUIZ_DRAFT_KEY = 'cqcRegistrationDraft';
+// Every field that can hold candidate-entered data across all four panels,
+// including the free-text "Other" fields that only appear conditionally.
+const DRAFT_FIELD_IDS = [
+  'surname','firstName','lastName','gender','dob',
+  'phone','email','guardianName','guardianPhone','address',
+  'school','otherSchool','level','otherLevel','fieldOfStudy','gradYear'
+];
+
+function collectDraftFromDOM(){
+  const values = {};
+  DRAFT_FIELD_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) values[id] = el.value;
+  });
+  return {
+    step: currentStep,
+    values: values,
+    otherLevelConfirmed: otherLevelConfirmed,
+    otherSchoolConfirmed: otherSchoolConfirmed,
+    savedAt: new Date().toISOString()
+  };
+}
+
+function saveDraft(){
+  // Never save a draft while the confirmation screen is showing — by then
+  // the registration has either been submitted (and is cleared separately)
+  // or there is simply nothing meaningful to resume.
+  if(currentStep === 'confirm') return;
+  try{
+    localStorage.setItem(QUIZ_DRAFT_KEY, JSON.stringify(collectDraftFromDOM()));
+  }catch(e){ /* localStorage unavailable — silently skip autosave */ }
+}
+
+function clearDraft(){
+  try{ localStorage.removeItem(QUIZ_DRAFT_KEY); }catch(e){}
+}
+
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem(QUIZ_DRAFT_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    if(!parsed || typeof parsed !== 'object' || !parsed.values) return null;
+    return parsed;
+  }catch(e){ return null; }
+}
+
+// Resets every field in the form back to blank and clears validation/step
+// state, so "Fresh Registration" always starts from a completely clean slate
+// even if a draft (or a half-finished attempt) already exists on this device.
+function resetFormFields(){
+  DRAFT_FIELD_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  Object.keys(data).forEach(k=> delete data[k]);
+  otherLevelConfirmed = false;
+  otherSchoolConfirmed = false;
+  document.getElementById('otherLevelConfirmed').classList.remove('show');
+  document.getElementById('otherSchoolConfirmed').classList.remove('show');
+  syncOtherLevelField();
+  syncOtherSchoolField();
+  document.getElementById('ackCheck').checked = false;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('navBtns').style.display = '';
+  document.querySelector('.stepper').style.display = '';
+  document.querySelectorAll('.field.invalid').forEach(f=>f.classList.remove('invalid'));
+  currentStep = 0;
+}
+
+// Populates the form from a saved draft and jumps to the step the candidate
+// was on when they left off.
+function applyDraftToForm(draft){
+  Object.keys(draft.values).forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = draft.values[id];
+  });
+  // Re-derive the visibility of the conditional "Other" fields from the
+  // restored select values, then restore their confirmed/"recorded" state.
+  syncOtherLevelField();
+  syncOtherSchoolField();
+  if(draft.values.level === 'OTHER'){
+    document.getElementById('otherLevel').value = draft.values.otherLevel || '';
+    otherLevelConfirmed = !!draft.otherLevelConfirmed;
+    document.getElementById('otherLevelConfirmed').classList.toggle('show', otherLevelConfirmed);
+  }
+  if(draft.values.school === 'OTHER_SCHOOL'){
+    document.getElementById('otherSchool').value = draft.values.otherSchool || '';
+    otherSchoolConfirmed = !!draft.otherSchoolConfirmed;
+    document.getElementById('otherSchoolConfirmed').classList.toggle('show', otherSchoolConfirmed);
+  }
+  // Mirror the restored values into `data` too, since later steps (the
+  // Overview panel, final submission) read from `data`, not the DOM.
+  DRAFT_FIELD_IDS.forEach(id=>{ data[id] = draft.values[id]; });
+  document.getElementById('navBtns').style.display = '';
+  document.querySelector('.stepper').style.display = '';
+  currentStep = Math.min(Math.max(Number(draft.step) || 0, 0), 3);
+  if(currentStep === 3) renderOverview();
+  render();
+}
+
+// Autosave on every keystroke/selection change anywhere in the form, so
+// progress is never lost even if the candidate closes the tab mid-panel.
+document.getElementById('formCard').addEventListener('input', saveDraft);
+document.getElementById('formCard').addEventListener('change', saveDraft);
+
+function backToQuizMenu(){
+  document.getElementById('quizMenuView').style.display = '';
+  document.getElementById('quizFormView').style.display = 'none';
+  document.getElementById('quizStatusView').style.display = 'none';
+  document.getElementById('quizAdminView').style.display = 'none';
+}
+
+// ─── CHECK MY STATUS ────────────────────────────────────────
+async function lookupStatus(){
+  const appIdEl = document.getElementById('statusAppId');
+  const phoneEl = document.getElementById('statusPhone');
+  const errEl = document.getElementById('statusErr');
+  const resultEl = document.getElementById('statusResult');
+  const btn = document.getElementById('statusLookupBtn');
+
+  const applicationId = appIdEl.value.trim();
+  const phone = phoneEl.value.trim();
+
+  appIdEl.closest('.field').classList.toggle('invalid', !applicationId);
+  phoneEl.closest('.field').classList.toggle('invalid', !phone);
+  errEl.classList.remove('show');
+  resultEl.innerHTML = '';
+
+  if(!applicationId || !phone) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Checking…';
+  try{
+    const result = await callBackend('lookupStatus', { applicationId, phone });
+    const badgeClass = result.status === 'accepted' ? 'status-accepted' : 'status-pending';
+    const statusLabel = result.status === 'accepted' ? 'Accepted' : 'Pending Review';
+    const fullName = [result.firstName, result.lastName].filter(Boolean).join(' ');
+    resultEl.innerHTML = `
+      <div class="overview" style="margin-top:20px;">
+        <div class="grp-title">Registration Found</div>
+        <table>
+          <tr><td>Application ID</td><td>${escapeHtmlSafe(result.applicationId||'')}</td></tr>
+          <tr><td>Candidate</td><td>${escapeHtmlSafe(fullName)}</td></tr>
+          <tr><td>School</td><td>${escapeHtmlSafe(result.school||'')}</td></tr>
+          <tr><td>Status</td><td><span class="status-badge ${badgeClass}">${statusLabel}</span></td></tr>
+        </table>
+      </div>
+      <p class="desc" style="margin-top:14px;">
+        ${result.status === 'accepted'
+          ? 'Your registration has been accepted. Your PDF Confirmation Slip and related documents were sent to your registered email address.'
+          : 'Your registration is still pending review by the Registrar. This review takes at most 48 hours from submission.'}
+      </p>`;
+  }catch(e){
+    console.error('Status lookup failed', e);
+    errEl.textContent = (e && e.message) ? e.message : 'We could not find a registration matching that Application ID and phone number.';
+    errEl.classList.add('show');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Check Status';
+}
+document.getElementById('statusLookupBtn').addEventListener('click', lookupStatus);
+document.getElementById('statusPhone').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); lookupStatus(); }
+});
+
+function openQuizSection(section){
+  document.getElementById('quizMenuView').style.display = 'none';
+  document.getElementById('quizFormView').style.display = 'none';
+  document.getElementById('quizStatusView').style.display = 'none';
+  document.getElementById('quizAdminView').style.display = 'none';
+
+  if(section === 'fresh'){
+    document.getElementById('quizFormView').style.display = '';
+    document.getElementById('noDraftCard').style.display = 'none';
+    document.getElementById('formCard').style.display = '';
+    resetFormFields();
+    render();
+    checkRegistrationStatus();
+  } else if(section === 'continue'){
+    document.getElementById('quizFormView').style.display = '';
+    const draft = loadDraft();
+    if(draft){
+      document.getElementById('noDraftCard').style.display = 'none';
+      document.getElementById('formCard').style.display = '';
+      applyDraftToForm(draft);
+      checkRegistrationStatus();
+    } else {
+      document.getElementById('formCard').style.display = 'none';
+      document.querySelector('#quizFormView .stepper').style.display = 'none';
+      document.getElementById('noDraftCard').style.display = 'block';
+    }
+  } else if(section === 'status'){
+    document.getElementById('quizStatusView').style.display = '';
+    document.getElementById('statusAppId').value = '';
+    document.getElementById('statusPhone').value = '';
+    document.getElementById('statusErr').classList.remove('show');
+    document.getElementById('statusResult').innerHTML = '';
+    document.querySelectorAll('#quizStatusView .field.invalid').forEach(f=>f.classList.remove('invalid'));
+  } else if(section === 'admin'){
+    document.getElementById('quizAdminView').style.display = '';
+    openRegistrarView();
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
 const LEVEL_LABEL = {S2:'S S 2', S3:'S S 3', OTHER:'Other', AP:'Other'};
 const FIELD_LABEL = {ART:'Arts', COM:'Commercial', SCI:'Science'};
 // Contest logistics — update these once the date and venue are finalized.
@@ -1975,6 +2272,9 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     showPanel('confirm');
     document.getElementById('navBtns').style.display = 'none';
     document.querySelector('.stepper').style.display = 'none';
+    // The registration is now submitted (or matched an existing one) — there
+    // is nothing left to "continue", so remove the autosaved draft.
+    clearDraft();
   }catch(e){
     console.error(e);
     // Surface the backend's actual message when it has one (e.g. "Registration
@@ -2843,33 +3143,34 @@ async function sha256(text){
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-document.getElementById('adminToggle').addEventListener('click', ()=>{
+// Opens the Registrar View. Reached from the "Registrar View" card on the
+// registration menu (openQuizSection('admin')) — the outer #quizAdminView
+// container is shown/hidden by openQuizSection/backToQuizMenu, and this
+// function is responsible for the passcode gate + lockout state inside it.
+function openRegistrarView(){
   if(updateAdminLockUI()){
-    // Locked out: the passcode bar must not open at all. The countdown
-    // notice under the link (kept up to date by updateAdminLockUI) already
-    // tells the visitor how long is left, so there's nothing more to do.
+    // Locked out: the passcode gate must not open at all. The countdown
+    // notice above (kept up to date by updateAdminLockUI) already tells the
+    // Registrar how long is left, so there's nothing more to do.
+    document.getElementById('adminPanel').classList.remove('active');
     return;
   }
 
   const panel = document.getElementById('adminPanel');
-  const wasActive = panel.classList.contains('active');
-  panel.classList.toggle('active');
+  panel.classList.add('active');
 
-  if(!wasActive){
-    // just opened
-    if(adminUnlocked){
-      document.getElementById('lockGate').style.display = 'none';
-      document.getElementById('adminContent').style.display = 'block';
-      loadAdminData();
-    } else {
-      document.getElementById('lockGate').style.display = 'block';
-      document.getElementById('adminContent').style.display = 'none';
-      document.getElementById('passcodeInput').value = '';
-      document.getElementById('passcodeErr').classList.remove('show');
-      setTimeout(()=>document.getElementById('passcodeInput').focus(), 50);
-    }
+  if(adminUnlocked){
+    document.getElementById('lockGate').style.display = 'none';
+    document.getElementById('adminContent').style.display = 'block';
+    loadAdminData();
+  } else {
+    document.getElementById('lockGate').style.display = 'block';
+    document.getElementById('adminContent').style.display = 'none';
+    document.getElementById('passcodeInput').value = '';
+    document.getElementById('passcodeErr').classList.remove('show');
+    setTimeout(()=>document.getElementById('passcodeInput').focus(), 50);
   }
-});
+}
 
 async function attemptUnlock(){
   const input = document.getElementById('passcodeInput');
