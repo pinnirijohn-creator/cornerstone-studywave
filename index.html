@@ -549,6 +549,12 @@
     background:var(--success-bg);color:var(--success);
     box-shadow:0 0 0 1px rgba(30,122,75,0.2);
   }
+  .acceptance-message{
+    margin-top:18px;padding:20px 22px;border-radius:var(--radius-lg);
+    background:var(--success-bg);border:1px solid rgba(30,122,75,0.25);
+    color:var(--ink);font-size:13.5px;line-height:1.65;
+    white-space:normal;font-family:'Inter',sans-serif;
+  }
   .admin-actions{display:flex;gap:6px;flex-wrap:wrap;}
   .admin-actions button{padding:6px 12px;font-size:11px;letter-spacing:0;border-radius:6px;}
   .btn-accept{
@@ -966,7 +972,7 @@
   <div class="site-nav-inner">
     <div class="site-nav-brand">
       <img id="navLogo" alt="Cornerstone Quiz Contest">
-      <span>Cornerstone StudyWave</span>
+      <span>Cornerstone Quiz Contest</span>
     </div>
     <button class="nav-tab active" data-page="page-home" onclick="showPage('page-home')">Home</button>
     <button class="nav-tab" data-page="page-junior" onclick="showPage('page-junior')">Junior Secondary</button>
@@ -1027,7 +1033,7 @@
       <button class="quicklink-card" onclick="showPage('page-quiz')">
         <div class="quicklink-icon">🔎</div>
         <h3>Check Status</h3>
-        <p>Look up your registration status by Application ID.</p>
+        <p>Look up your registration status by phone number and name.</p>
       </button>
     </div>
 
@@ -1091,7 +1097,7 @@
       <button class="quicklink-card" onclick="openQuizSection('status')">
         <div class="quicklink-icon">🔎</div>
         <h3>Check my Status</h3>
-        <p>Look up your registration status using your Application ID.</p>
+        <p>Look up your registration status using your phone number and name.</p>
       </button>
       <button class="quicklink-card" onclick="openQuizSection('admin')">
         <div class="quicklink-icon">🔐</div>
@@ -1337,20 +1343,19 @@
     <div class="foot-link" style="margin:0 0 20px;"><a onclick="backToQuizMenu()">&larr; Back to Registration Menu</a></div>
     <div class="card" id="statusCard">
       <h2>Check my Status</h2>
-      <p class="desc">Enter your Application ID and the phone number used at registration to check your current status.</p>
-      <div class="field" data-field="statusAppId">
-        <label>Application ID<span class="req">*</span></label>
-        <input type="text" id="statusAppId" placeholder="e.g. CQC/2026/HPG/S2/SCI/001">
-        <div class="err-msg">Please enter your Application ID.</div>
-      </div>
-      <div class="field" data-field="statusPhone">
-        <label>Phone Number<span class="req">*</span></label>
-        <input type="tel" id="statusPhone" placeholder="e.g. 0803 000 0000">
-        <div class="err-msg">Please enter the phone number used at registration.</div>
+      <p class="desc">
+        Type your phone number and your full name &mdash; in this order: phone number,
+        Surname, First Name, Last Name &mdash; separated by spaces, exactly as you gave them at
+        registration. For example: <strong>08030000000 Okoro John Peter</strong>.
+      </p>
+      <div class="field" data-field="statusQuery">
+        <label>Phone Number and Name<span class="req">*</span></label>
+        <input type="text" id="statusQuery" placeholder="e.g. 08030000000 Okoro John Peter">
+        <div class="err-msg">Please enter your phone number followed by your Surname, First Name, and Last Name.</div>
       </div>
       <div class="lock-err" id="statusErr" style="max-width:none;"></div>
       <div class="nav-btns" style="justify-content:flex-end;">
-        <button class="btn-primary" id="statusLookupBtn">Check Status</button>
+        <button class="btn-primary" id="statusLookupBtn">Search</button>
       </div>
       <div id="statusResult"></div>
     </div>
@@ -2049,57 +2054,130 @@ function backToQuizMenu(){
 }
 
 // ─── CHECK MY STATUS ────────────────────────────────────────
+// The candidate types one line: phone number, then Surname, First Name,
+// Last Name, separated by spaces (e.g. "08030000000 Okoro John Peter").
+// We split off the first whitespace-separated token as the phone number
+// and require exactly three words after it for the name.
+function parseStatusQuery(raw){
+  const tokens = String(raw || '').trim().split(/\s+/).filter(Boolean);
+  if(tokens.length !== 4) return null;
+  const [phone, surname, firstName, lastName] = tokens;
+  return { phone, surname, firstName, lastName };
+}
+
+let lastStatusRecord = null;
+
 async function lookupStatus(){
-  const appIdEl = document.getElementById('statusAppId');
-  const phoneEl = document.getElementById('statusPhone');
+  const queryEl = document.getElementById('statusQuery');
   const errEl = document.getElementById('statusErr');
   const resultEl = document.getElementById('statusResult');
   const btn = document.getElementById('statusLookupBtn');
 
-  const applicationId = appIdEl.value.trim();
-  const phone = phoneEl.value.trim();
-
-  appIdEl.closest('.field').classList.toggle('invalid', !applicationId);
-  phoneEl.closest('.field').classList.toggle('invalid', !phone);
+  const parsed = parseStatusQuery(queryEl.value);
+  queryEl.closest('.field').classList.toggle('invalid', !parsed);
   errEl.classList.remove('show');
   resultEl.innerHTML = '';
+  lastStatusRecord = null;
 
-  if(!applicationId || !phone) return;
+  if(!parsed){
+    errEl.textContent = 'Please enter your phone number followed by your Surname, First Name, and Last Name — e.g. 08030000000 Okoro John Peter.';
+    errEl.classList.add('show');
+    return;
+  }
 
   btn.disabled = true;
-  btn.textContent = 'Checking…';
+  btn.textContent = 'Searching…';
   try{
-    const result = await callBackend('lookupStatus', { applicationId, phone });
-    const badgeClass = result.status === 'accepted' ? 'status-accepted' : 'status-pending';
-    const statusLabel = result.status === 'accepted' ? 'Accepted' : 'Pending Review';
-    const fullName = [result.firstName, result.lastName].filter(Boolean).join(' ');
-    resultEl.innerHTML = `
-      <div class="overview" style="margin-top:20px;">
-        <div class="grp-title">Registration Found</div>
-        <table>
-          <tr><td>Application ID</td><td>${escapeHtmlSafe(result.applicationId||'')}</td></tr>
-          <tr><td>Candidate</td><td>${escapeHtmlSafe(fullName)}</td></tr>
-          <tr><td>School</td><td>${escapeHtmlSafe(result.school||'')}</td></tr>
-          <tr><td>Status</td><td><span class="status-badge ${badgeClass}">${statusLabel}</span></td></tr>
-        </table>
-      </div>
-      <p class="desc" style="margin-top:14px;">
-        ${result.status === 'accepted'
-          ? 'Your registration has been accepted. Your PDF Confirmation Slip and related documents were sent to your registered email address.'
-          : 'Your registration is still pending review by the Registrar. This review takes at most 48 hours from submission.'}
-      </p>`;
+    const result = await callBackend('lookupStatus', parsed);
+    const fullName = [result.surname, result.firstName, result.lastName].filter(Boolean).join(' ');
+
+    if(result.status === 'accepted'){
+      lastStatusRecord = result;
+      const emailBody = buildAcceptanceEmailBody(result);
+      resultEl.innerHTML = `
+        <div class="overview" style="margin-top:20px;">
+          <div class="grp-title">Registration Found</div>
+          <table>
+            <tr><td>Application ID</td><td>${escapeHtmlSafe(result.applicationId||'')}</td></tr>
+            <tr><td>Candidate</td><td>${escapeHtmlSafe(fullName)}</td></tr>
+            <tr><td>Status</td><td><span class="status-badge status-accepted">Accepted</span></td></tr>
+          </table>
+        </div>
+        <div class="acceptance-message">${escapeHtmlSafe(emailBody).replace(/\n/g,'<br>')}</div>
+        <div class="nav-btns" style="justify-content:center;border-top:none;margin-top:18px;padding-top:0;">
+          <button class="btn-primary" id="statusDownloadSlipBtn">Download Slip</button>
+        </div>`;
+      document.getElementById('statusDownloadSlipBtn').addEventListener('click', downloadStatusSlip);
+    }else{
+      resultEl.innerHTML = `
+        <div class="overview" style="margin-top:20px;">
+          <div class="grp-title">Registration Found</div>
+          <table>
+            <tr><td>Application ID</td><td>${escapeHtmlSafe(result.applicationId||'')}</td></tr>
+            <tr><td>Candidate</td><td>${escapeHtmlSafe(fullName)}</td></tr>
+            <tr><td>Status</td><td><span class="status-badge status-pending">Pending Review</span></td></tr>
+          </table>
+        </div>
+        <p class="desc" style="margin-top:14px;">
+          Your registration is still pending review by the Registrar. This review takes at most 48 hours from submission.
+        </p>`;
+    }
   }catch(e){
     console.error('Status lookup failed', e);
-    errEl.textContent = (e && e.message) ? e.message : 'We could not find a registration matching that Application ID and phone number.';
+    errEl.textContent = (e && e.message) ? e.message : 'We could not find a registration matching that phone number and name.';
     errEl.classList.add('show');
   }
   btn.disabled = false;
-  btn.textContent = 'Check Status';
+  btn.textContent = 'Search';
 }
 document.getElementById('statusLookupBtn').addEventListener('click', lookupStatus);
-document.getElementById('statusPhone').addEventListener('keydown', (e)=>{
+document.getElementById('statusQuery').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); lookupStatus(); }
 });
+
+// Exactly the same congratulatory wording the Registrar's own email uses
+// when they click "Accept" — kept in one place so both stay in sync.
+function buildAcceptanceEmailBody(record){
+  const fullName = `${record.firstName} ${record.surname}`;
+  return `Dear ${fullName},
+
+Congratulations! Your registration for the Cornerstone Quiz Contest has been accepted.
+
+APPLICATION DETAILS
+Application ID:    ${record.applicationId}
+Level of Study:    ${record.levelLabel || record.level}
+Field of Study:    ${record.fieldLabel || record.fieldOfStudy}
+School / Alma Mater: ${record.school}
+
+CONTEST DETAILS
+Date:  ${CONTEST_DATE}
+Venue: ${CONTEST_VENUE}
+Time:  ${CONTEST_TIME}
+
+Please find attached your three-page Confirmation Slip, Letter of Attestation, and Parent/Guardian Consent Form. Please check, download, and print the attachment — you will need it on the day of the contest.
+
+Warm regards,
+The Cornerstone Quiz Contest Registrar
+interestincqc@outlook.com`;
+}
+
+// Regenerates the same three-page Confirmation Slip / Letter of
+// Attestation / Parent-Guardian Consent Form PDF the Registrar downloads
+// on Accept, so the candidate can get their own copy straight from here.
+function downloadStatusSlip(){
+  if(!lastStatusRecord) return;
+  const record = lastStatusRecord;
+  buildConfirmationPdf({
+    applicationId: record.applicationId,
+    surname: record.surname, firstName: record.firstName, lastName: record.lastName,
+    gender: record.gender, dob: record.dob,
+    phone: record.phone, email: record.email,
+    guardianName: record.guardianName, guardianPhone: record.guardianPhone,
+    address: record.address,
+    school: record.school, levelLabel: record.levelLabel, fieldLabel: record.fieldLabel,
+    gradYear: record.gradYear || 'Not specified'
+  });
+}
 
 function openQuizSection(section){
   document.getElementById('quizMenuView').style.display = 'none';
