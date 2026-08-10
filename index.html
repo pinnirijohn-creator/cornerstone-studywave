@@ -2272,7 +2272,7 @@ var TRI_SUBJECTS = {
     { key:'homemgt',name:'Home Management',                   icon:'🏠' },
     { key:'catering',name:'Catering Craft',                   icon:'🍽️' },
     { key:'hausa',  name:'Hausa',                             icon:'🗣️' },
-    { key:'berom',  name:'Berom',                             icon:'🗣️' }
+    { key:'berom',  name:'Lem Berom',                         icon:'🌵', iconBg:'linear-gradient(135deg,#7a1330 0%,#7a1330 48%,#1f6b3a 52%,#1f6b3a 100%)' }
   ],
   BUS: [
     { key:'econ',   name:'Economics',                         icon:'📈' },
@@ -2324,8 +2324,9 @@ function renderTriGrid(group){
         + '<span class="bc-status"' + (available ? ' style="background:var(--success-bg);color:var(--success);"' : '') + '>'
         + (available ? 'Available' : 'Coming soon') + '</span></div>';
     }).join('');
+    var iconStyle = s.iconBg ? ' style="background:' + s.iconBg + ';"' : '';
     return '<div class="board-card">'
-      + '<div class="bc-top"><div class="bc-icon">' + s.icon + '</div>'
+      + '<div class="bc-top"><div class="bc-icon"' + iconStyle + '>' + s.icon + '</div>'
       + '<div><h4>' + s.name + '</h4><div class="bc-count">' + TRI_LABEL[group] + '</div></div></div>'
       + '<div class="bc-resources">' + (rows || '<div class="bc-resource-row"><span>No resource type selected</span></div>') + '</div>'
       + '</div>';
