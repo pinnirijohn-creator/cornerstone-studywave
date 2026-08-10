@@ -1026,29 +1026,23 @@
   }
   .ss-quicklink-card{
     appearance:none;text-align:left;cursor:pointer;
-    background:linear-gradient(150deg,var(--navy) 0%,var(--navy-2) 60%,var(--navy-3) 130%);
-    border:1px solid rgba(212,160,23,0.25);
-    border-radius:var(--radius-lg);padding:24px 20px;
-    box-shadow:var(--shadow-md);transition:var(--transition);
-    display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;
-  }
-  .ss-quicklink-card::after{
-    content:'';position:absolute;inset:0;
-    background:linear-gradient(90deg,transparent,rgba(212,160,23,0.5),transparent);
-    height:1px;top:auto;bottom:0;
+    background:var(--paper);border:1px solid var(--rule);
+    border-radius:var(--radius-lg);padding:20px 18px;
+    box-shadow:var(--shadow-sm);transition:var(--transition);
+    display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;
   }
   .ss-quicklink-card:hover{
-    transform:translateY(-4px);box-shadow:var(--shadow-lg);
+    transform:translateY(-3px);box-shadow:var(--shadow-md);
     border-color:var(--gold-2);
   }
   .ss-quicklink-card .ql-icon{
-    width:42px;height:42px;border-radius:12px;
-    display:flex;align-items:center;justify-content:center;font-size:20px;
-    background:linear-gradient(135deg,var(--gold-2),var(--gold-3));
-    color:var(--navy);
+    width:38px;height:38px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;font-size:19px;
+    background:linear-gradient(135deg,var(--navy),var(--navy-3));
+    color:var(--gold-3);
   }
-  .ss-quicklink-card h3{font-family:'Fraunces',serif;font-size:15.5px;color:#fff;font-weight:600;}
-  .ss-quicklink-card p{font-size:12.5px;color:rgba(255,255,255,0.68);line-height:1.45;}
+  .ss-quicklink-card h3{font-family:'Fraunces',serif;font-size:15.5px;color:var(--ink);font-weight:600;}
+  .ss-quicklink-card p{font-size:12.5px;color:var(--ink-muted);line-height:1.4;}
   .ss-back{
     display:inline-flex;align-items:center;gap:6px;
     font-size:12.5px;font-weight:600;color:var(--navy-2);cursor:pointer;
@@ -1350,13 +1344,96 @@
         <h3>Quiz Contest</h3>
         <p>Register for the Cornerstone Quiz Contest 2026.</p>
       </button>
-      <button class="quicklink-card" onclick="showPage('page-quiz')">
-        <div class="quicklink-icon">🔎</div>
-        <h3>Check Status</h3>
-        <p>Look up your registration status by phone number and name.</p>
+      <button class="quicklink-card" onclick="showPage('page-institutional')">
+        <div class="quicklink-icon">🏛️</div>
+        <h3>Institutional Infrastructure</h3>
+        <p>About us, support &amp; contact, and privacy controls.</p>
       </button>
     </div>
 
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: INSTITUTIONAL INFRASTRUCTURE — HUB
+═══════════════════════════════════════════════════════════ -->
+<section id="page-institutional" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">Institutional Infrastructure</div>
+    <h1>Institutional Infrastructure</h1>
+    <p>Learn about the initiative behind Cornerstone StudyWave, get support, and manage your privacy — choose a section below.</p>
+  </div>
+  <div class="ss-wrap">
+    <h2 class="section-heading">Explore This Section</h2>
+    <p class="section-sub">Choose a category below, or use the Institutional Infrastructure menu at any time.</p>
+    <div class="ss-quicklinks">
+      <button class="ss-quicklink-card" onclick="showPage('page-institutional-about')">
+        <div class="ql-icon">🏫</div>
+        <h3>4.1 About, Mission, &amp; Impact Dashboard</h3>
+        <p>Who we are, what we stand for, and the impact of our work so far.</p>
+      </button>
+      <button class="ss-quicklink-card" onclick="showPage('page-institutional-support')">
+        <div class="ql-icon">💬</div>
+        <h3>4.2 Omni-Channel Contact &amp; Support Ticketing</h3>
+        <p>Reach us across multiple channels and track your support requests.</p>
+      </button>
+      <button class="ss-quicklink-card" onclick="showPage('page-institutional-privacy')">
+        <div class="ql-icon">🔒</div>
+        <h3>4.3 Student &amp; Guardian Privacy Control Center</h3>
+        <p>Understand and manage how student and guardian data is handled.</p>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: INSTITUTIONAL INFRASTRUCTURE — SUB-PAGES
+═══════════════════════════════════════════════════════════ -->
+<section id="page-institutional-about" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">4.1 &middot; Institutional Infrastructure</div>
+    <h1>About, Mission, &amp; Impact Dashboard</h1>
+    <p>Our story, our mission, and the difference we're making — full details coming soon.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-institutional')">Back to Institutional Infrastructure</a>
+    <div class="stub-card">
+      <div class="quicklink-icon">🏫</div>
+      <h2>About, Mission &amp; Impact Dashboard</h2>
+      <p>This section will introduce the Pin Niri John Initiative, our mission behind Cornerstone StudyWave, and a live dashboard of our impact. Content is being finalized and will appear here shortly.</p>
+    </div>
+  </div>
+</section>
+
+<section id="page-institutional-support" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">4.2 &middot; Institutional Infrastructure</div>
+    <h1>Omni-Channel Contact &amp; Support Ticketing</h1>
+    <p>Get in touch and track your support requests — full details coming soon.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-institutional')">Back to Institutional Infrastructure</a>
+    <div class="stub-card">
+      <div class="quicklink-icon">💬</div>
+      <h2>Omni-Channel Contact &amp; Support Ticketing</h2>
+      <p>This section will let you reach the Cornerstone StudyWave team by phone, email, or WhatsApp, and open or track a support ticket. Content is being finalized and will appear here shortly.</p>
+    </div>
+  </div>
+</section>
+
+<section id="page-institutional-privacy" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">4.3 &middot; Institutional Infrastructure</div>
+    <h1>Student &amp; Guardian Privacy Control Center</h1>
+    <p>How we handle student and guardian data — full details coming soon.</p>
+  </div>
+  <div class="ss-wrap">
+    <a class="ss-back" onclick="showPage('page-institutional')">Back to Institutional Infrastructure</a>
+    <div class="stub-card">
+      <div class="quicklink-icon">🔒</div>
+      <h2>Student &amp; Guardian Privacy Control Center</h2>
+      <p>This section will explain how student and guardian information submitted during registration is stored, used, and protected, and will let guardians request updates or deletion of their data. Content is being finalized and will appear here shortly.</p>
+    </div>
   </div>
 </section>
 
