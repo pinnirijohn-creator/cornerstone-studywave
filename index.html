@@ -1051,7 +1051,7 @@
   .ss-back:hover{color:var(--gold-2);}
   .ss-back::before{content:'←';font-size:14px;}
 
-  /* Departmental Tri-Feeder System */
+  /* Core & Departmental Tri-Feeder System */
   .path-grid{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:18px;margin-bottom:8px;
@@ -1279,7 +1279,7 @@
       <div class="nav-dropdown-menu" id="seniorNavMenu">
         <button class="nav-dropdown-item" onclick="goSenior('page-senior-tri')">
           <div class="dd-num">1</div>
-          <div><div class="dd-title">Departmental Tri-Feeder System</div><div class="dd-sub">Choose Science, Commercial or Arts to see your subject boards.</div></div>
+          <div><div class="dd-title">Core &amp; Departmental Tri-Feeder System</div><div class="dd-sub">Core, Science, Humanities or Business — browse subject boards by group.</div></div>
         </button>
         <button class="nav-dropdown-item" onclick="goSenior('page-senior-stem')">
           <div class="dd-num">2</div>
@@ -1526,8 +1526,8 @@
     <div class="ss-quicklinks">
       <button class="ss-quicklink-card" onclick="showPage('page-senior-tri')">
         <div class="ql-icon">🧭</div>
-        <h3>Departmental Tri-Feeder System</h3>
-        <p>Choose Science, Commercial or Arts, then explore your subject boards.</p>
+        <h3>Core &amp; Departmental Tri-Feeder System</h3>
+        <p>Core Compulsory, Sciences, Humanities/Arts &amp; Business — explore every subject board.</p>
       </button>
       <button class="ss-quicklink-card" onclick="showPage('page-senior-stem')">
         <div class="ql-icon">🔬</div>
@@ -1554,46 +1554,52 @@
 <section id="page-senior-tri" class="page">
   <div class="ss-hero">
     <div class="eyebrow">1 &middot; Senior Secondary</div>
-    <h1>Departmental Tri-Feeder System</h1>
-    <p>Choose your department to unlock the subject boards built for it — Science, Commercial or Arts.</p>
+    <h1>Core &amp; Departmental Tri-Feeder System</h1>
+    <p>Choose a subject group to unlock its boards — Core Compulsory Subjects, Sciences, Humanities/Arts or Business/Commercial.</p>
   </div>
   <div class="ss-wrap">
     <a class="ss-back" onclick="showPage('page-senior')">Back to Senior Secondary</a>
 
-    <!-- GATEKEEPER: shown until a path is chosen -->
+    <!-- GATEKEEPER: shown until a subject group is chosen -->
     <div id="triGatekeeper">
-      <h2 class="section-heading">Choose Your Department</h2>
-      <p class="section-sub">Your subject boards will be shown once you select a path below.</p>
+      <h2 class="section-heading">Choose a Subject Group</h2>
+      <p class="section-sub">Your subject boards will be shown once you select a group below.</p>
       <div class="path-grid">
+        <div class="path-card" onclick="chooseTriPath('CORE')">
+          <div class="path-icon">🧭</div>
+          <h3>Core Compulsory Subjects</h3>
+          <p>English, Mathematics, ICT, Citizenship &amp; the trade/entrepreneurship subjects every student takes.</p>
+        </div>
         <div class="path-card" onclick="chooseTriPath('SCI')">
           <div class="path-icon">🧪</div>
-          <h3>Science</h3>
-          <p>Biology, Chemistry, Physics, Mathematics &amp; English Language.</p>
+          <h3>Sciences</h3>
+          <p>Biology, Chemistry, Physics, Agriculture, Further Maths &amp; more.</p>
         </div>
-        <div class="path-card" onclick="chooseTriPath('COM')">
-          <div class="path-icon">📊</div>
-          <h3>Commercial</h3>
-          <p>Commerce, Economics, Financial Accounting, Mathematics &amp; English Language.</p>
-        </div>
-        <div class="path-card" onclick="chooseTriPath('ART')">
+        <div class="path-card" onclick="chooseTriPath('HUM')">
           <div class="path-icon">📜</div>
-          <h3>Arts</h3>
-          <p>English Literature, Government, C.R.K., Mathematics &amp; English Language.</p>
+          <h3>Humanities / Arts</h3>
+          <p>Government, History, Literature, C.R.S., languages, arts &amp; home economics subjects.</p>
+        </div>
+        <div class="path-card" onclick="chooseTriPath('BUS')">
+          <div class="path-icon">📊</div>
+          <h3>Business / Commercial</h3>
+          <p>Economics, Commerce, Accounting &amp; Marketing.</p>
         </div>
       </div>
     </div>
 
-    <!-- SUBJECT BOARDS: shown after a path is chosen -->
+    <!-- SUBJECT BOARDS: shown after a subject group is chosen -->
     <div id="triBoards" style="display:none;">
       <div class="path-banner">
         <div>
-          <div class="pb-label">Selected Department</div>
+          <div class="pb-label">Selected Group</div>
           <div class="pb-name" id="triPathName">—</div>
         </div>
-        <button onclick="resetTriPath()">Change Department</button>
+        <button onclick="resetTriPath()">Change Subject Group</button>
       </div>
       <h2 class="section-heading">Subject Boards</h2>
-      <p class="section-sub">Notes, past questions and topic guides for each subject — added by the Registrar as they become ready.</p>
+      <p class="section-sub">Notes, video lessons and past questions for each subject — added by the Registrar as they become ready.</p>
+      <div class="resource-toggles" id="triFilters"></div>
       <div class="board-grid" id="triBoardGrid"></div>
     </div>
   </div>
@@ -2223,29 +2229,119 @@ function renderJuniorPage(level){
   renderJuniorGrid(level);
 }
 
-// ─── DEPARTMENTAL TRI-FEEDER SYSTEM ──────────────────────────
-// Subject boards reuse the same field-of-study taxonomy as quiz
-// registration (FIELD_LABEL / ANSWER_SHEET_SUBJECTS, defined below).
-// Registrar can mark a board "available" by adding a `url` to the
-// matching subject entry once resource notes/past questions are ready.
-var TRI_ICONS = {SCI:'🧪', COM:'📊', ART:'📜'};
-function chooseTriPath(fieldCode){
-  document.getElementById('triGatekeeper').style.display = 'none';
-  var boards = document.getElementById('triBoards');
-  boards.style.display = 'block';
-  document.getElementById('triPathName').textContent = FIELD_LABEL[fieldCode] + ' Department';
-  var subjects = ANSWER_SHEET_SUBJECTS[fieldCode] || [];
+// ─── CORE & DEPARTMENTAL TRI-FEEDER SYSTEM ───────────────────
+// Four subject groups, each with its own subject board grid. Every
+// subject board carries the same three resource types as Junior
+// Secondary (Video Lessons / PDF Notes / Past Questions). Registrar
+// can mark a resource "available" per subject by editing TRI_RESOURCES
+// below and adding a `url`; until then every resource shows "Coming soon".
+var TRI_LABEL = { CORE:'Core Compulsory Subjects', SCI:'Sciences', HUM:'Humanities / Arts', BUS:'Business / Commercial' };
+var TRI_ICONS = { CORE:'🧭', SCI:'🧪', HUM:'📜', BUS:'📊' };
+var TRI_SUBJECTS = {
+  CORE: [
+    { key:'eng',    name:'English Language',                            icon:'📖' },
+    { key:'genmath',name:'General Mathematics',                         icon:'➗' },
+    { key:'ict',    name:'Digital Technologies / ICT',                  icon:'💻' },
+    { key:'chs',    name:'Citizenship and Heritage Studies',            icon:'🏛️' },
+    { key:'solar',  name:'Solar Photovoltaic Installation and Maintenance', icon:'🔆' },
+    { key:'fashion',name:'Fashion Design and Garment Making',           icon:'🧵' },
+    { key:'livestk',name:'Livestock Farming',                           icon:'🐄' },
+    { key:'beauty', name:'Beauty and Cosmetology',                      icon:'💇' },
+    { key:'gsm',    name:'Computer Hardware and GSM Repairs',           icon:'🛠️' },
+    { key:'hort',   name:'Horticulture and Crop Production',            icon:'🌱' }
+  ],
+  SCI: [
+    { key:'bio',    name:'Biology',                          icon:'🧬' },
+    { key:'chem',   name:'Chemistry',                         icon:'⚗️' },
+    { key:'phy',    name:'Physics',                           icon:'🔭' },
+    { key:'agric',  name:'Agriculture',                       icon:'🌾' },
+    { key:'furmath',name:'Further Mathematics',               icon:'📐' },
+    { key:'geo',    name:'Geography',                         icon:'🌍' },
+    { key:'techdraw',name:'Technical Drawing',                icon:'📏' },
+    { key:'phe',    name:'Physical and Health Education',     icon:'🏃' },
+    { key:'foods',  name:'Foods and Nutrition',                icon:'🍲' }
+  ],
+  HUM: [
+    { key:'gov',    name:'Government',                        icon:'🏛️' },
+    { key:'nighist',name:'Nigerian History',                  icon:'📜' },
+    { key:'lit',    name:'Literature in English',             icon:'📚' },
+    { key:'crs',    name:'Christian Religious Studies',       icon:'✝️' },
+    { key:'french', name:'French',                            icon:'🇫🇷' },
+    { key:'visart', name:'Visual Arts',                       icon:'🎨' },
+    { key:'music',  name:'Music',                             icon:'🎵' },
+    { key:'homemgt',name:'Home Management',                   icon:'🏠' },
+    { key:'catering',name:'Catering Craft',                   icon:'🍽️' },
+    { key:'hausa',  name:'Hausa',                             icon:'🗣️' },
+    { key:'berom',  name:'Berom',                             icon:'🗣️' }
+  ],
+  BUS: [
+    { key:'econ',   name:'Economics',                         icon:'📈' },
+    { key:'comm',   name:'Commerce',                          icon:'🏪' },
+    { key:'acct',   name:'Accounting',                        icon:'🧾' },
+    { key:'mktg',   name:'Marketing',                         icon:'📣' }
+  ]
+};
+var TRI_RESOURCE_TYPES = [
+  { key:'video', label:'Video Lessons',   icon:'🎬' },
+  { key:'pdf',   label:'PDF Notes',       icon:'📄' },
+  { key:'past',  label:'Past Questions',  icon:'📝' }
+];
+var TRI_RESOURCES = {}; // TRI_RESOURCES['SCI']['bio'] = { video:'', pdf:'', past:'' }
+var triActiveFilters = {
+  CORE:{video:true,pdf:true,past:true},
+  SCI:{video:true,pdf:true,past:true},
+  HUM:{video:true,pdf:true,past:true},
+  BUS:{video:true,pdf:true,past:true}
+};
+var currentTriGroup = null;
+
+function toggleTriFilter(type){
+  if(!currentTriGroup) return;
+  triActiveFilters[currentTriGroup][type] = !triActiveFilters[currentTriGroup][type];
+  renderTriGrid(currentTriGroup);
+}
+function renderTriFilters(group){
+  var box = document.getElementById('triFilters');
+  if(!box) return;
+  box.innerHTML = TRI_RESOURCE_TYPES.map(function(rt){
+    var active = triActiveFilters[group][rt.key];
+    return '<button class="resource-toggle' + (active ? ' active' : '') + '" onclick="toggleTriFilter(\'' + rt.key + '\')">'
+      + '<span class="rt-check">' + (active ? '✓' : '') + '</span>' + rt.icon + ' ' + rt.label
+      + '</button>';
+  }).join('');
+}
+function renderTriGrid(group){
   var grid = document.getElementById('triBoardGrid');
+  if(!grid) return;
+  var filters = triActiveFilters[group];
+  var groupResources = TRI_RESOURCES[group] || {};
+  var subjects = TRI_SUBJECTS[group] || [];
   grid.innerHTML = subjects.map(function(s){
+    var res = groupResources[s.key] || {};
+    var rows = TRI_RESOURCE_TYPES.filter(function(rt){ return filters[rt.key]; }).map(function(rt){
+      var available = !!res[rt.key];
+      return '<div class="bc-resource-row"><span>' + rt.icon + ' ' + rt.label + '</span>'
+        + '<span class="bc-status"' + (available ? ' style="background:var(--success-bg);color:var(--success);"' : '') + '>'
+        + (available ? 'Available' : 'Coming soon') + '</span></div>';
+    }).join('');
     return '<div class="board-card">'
-      + '<div class="bc-top"><div class="bc-icon">' + (TRI_ICONS[fieldCode] || '📘') + '</div>'
-      + '<div><h4>' + s.name + '</h4><div class="bc-count">' + s.count + ' quiz questions in this field</div></div></div>'
-      + '<span class="bc-status">Notes coming soon</span>'
+      + '<div class="bc-top"><div class="bc-icon">' + s.icon + '</div>'
+      + '<div><h4>' + s.name + '</h4><div class="bc-count">' + TRI_LABEL[group] + '</div></div></div>'
+      + '<div class="bc-resources">' + (rows || '<div class="bc-resource-row"><span>No resource type selected</span></div>') + '</div>'
       + '</div>';
   }).join('');
+}
+function chooseTriPath(groupCode){
+  currentTriGroup = groupCode;
+  document.getElementById('triGatekeeper').style.display = 'none';
+  document.getElementById('triBoards').style.display = 'block';
+  document.getElementById('triPathName').textContent = TRI_LABEL[groupCode];
+  renderTriFilters(groupCode);
+  renderTriGrid(groupCode);
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function resetTriPath(){
+  currentTriGroup = null;
   document.getElementById('triBoards').style.display = 'none';
   document.getElementById('triGatekeeper').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
