@@ -1292,6 +1292,7 @@
       </div>
     </div>
     <button class="nav-tab" data-page="page-quiz" onclick="showPage('page-quiz')">Quiz Contest Registration</button>
+    <button class="nav-tab" data-page="page-registrar-console" onclick="showPage('page-registrar-console')">Registrar Console</button>
   </div>
 </nav>
 
@@ -2037,6 +2038,44 @@
 
 </section>
 
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE: REGISTRAR CONSOLE (passcode restricted)
+═══════════════════════════════════════════════════════════ -->
+<section id="page-registrar-console" class="page">
+  <div class="ss-hero">
+    <div class="eyebrow">Staff Only</div>
+    <h1>Registrar Console</h1>
+    <p>A restricted workspace for the Registrar. Enter the passcode to continue.</p>
+  </div>
+  <div class="ss-wrap">
+    <div class="lock-err" id="registrarConsoleLockNotice" style="max-width:440px;margin:0 auto 12px;"></div>
+    <div class="admin-panel active" id="registrarConsolePanel" style="max-width:520px;margin:0 auto;">
+      <h3>Registrar Console</h3>
+      <p class="hint">This area is restricted to the Registrar. Enter the passcode to continue.</p>
+
+      <div class="lock-gate" id="registrarConsoleLockGate">
+        <p>Enter the Registrar Console passcode to unlock this area.</p>
+        <div class="lock-row">
+          <input type="password" id="registrarConsolePasscodeInput" placeholder="Enter passcode">
+          <button class="btn-primary" id="registrarConsolePasscodeSubmit">Unlock</button>
+        </div>
+        <div class="lock-err" id="registrarConsolePasscodeErr">Incorrect passcode. Please try again.</div>
+      </div>
+
+      <div id="registrarConsoleContent" style="display:none;">
+        <p class="hint" style="margin-top:0;">Welcome — you're in. From here you can jump straight into the tools you use most.</p>
+        <div class="ss-quicklinks" style="margin-top:6px;">
+          <button class="ss-quicklink-card" onclick="showPage('page-quiz')">
+            <div class="ql-icon">🏆</div>
+            <h3>Quiz Contest Registrar View</h3>
+            <p>Review, accept and manage Cornerstone Quiz Contest registrations.</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
 // ⚠️ REQUIRED: paste your deployed Google Apps Script Web App URL here.
 // See setup instructions — this is the "Web app URL" you get after deploying.
@@ -2100,6 +2139,9 @@ function showPage(pageId){
   }
   if(JUNIOR_LEVELS.indexOf(JUNIOR_PAGE_TO_LEVEL[pageId]) !== -1 && typeof renderJuniorPage === 'function'){
     renderJuniorPage(JUNIOR_PAGE_TO_LEVEL[pageId]);
+  }
+  if(pageId === 'page-registrar-console' && typeof openRegistrarConsole === 'function'){
+    openRegistrarConsole();
   }
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -4352,6 +4394,126 @@ async function attemptUnlock(){
 document.getElementById('passcodeSubmit').addEventListener('click', attemptUnlock);
 document.getElementById('passcodeInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); attemptUnlock(); }
+});
+
+// ─── REGISTRAR CONSOLE (top-level nav tab) — passcode protected ─────────
+// Same SHA-256-hash + escalating-lockout pattern as the Quiz Registrar
+// View above, but fully independent: its own passcode, its own lockout
+// state in localStorage, and its own in-session unlocked flag, so
+// unlocking one does not unlock the other.
+const REGISTRAR_CONSOLE_PASSCODE_HASH = 'e618895b922baad1a008a04cd5359b11178ba2193802c388f2b4472c1c79ace4';
+const REGISTRAR_CONSOLE_LOCK_KEY = 'registrarConsoleLockState';
+let registrarConsoleUnlocked = false;
+let registrarConsoleLockoutTimer = null;
+
+function getRegistrarConsoleLockState(){
+  try{
+    const raw = localStorage.getItem(REGISTRAR_CONSOLE_LOCK_KEY);
+    if(!raw) return { failedAttempts:0, lockoutUntil:0, level:0 };
+    const parsed = JSON.parse(raw);
+    return {
+      failedAttempts: Number(parsed.failedAttempts) || 0,
+      lockoutUntil: Number(parsed.lockoutUntil) || 0,
+      level: Number(parsed.level) || 0
+    };
+  }catch(e){
+    return { failedAttempts:0, lockoutUntil:0, level:0 };
+  }
+}
+function saveRegistrarConsoleLockState(state){
+  try{ localStorage.setItem(REGISTRAR_CONSOLE_LOCK_KEY, JSON.stringify(state)); }catch(e){}
+}
+function updateRegistrarConsoleLockUI(){
+  const state = getRegistrarConsoleLockState();
+  const now = Date.now();
+  const notice = document.getElementById('registrarConsoleLockNotice');
+  const isLocked = now < state.lockoutUntil;
+  if(!notice) return isLocked;
+  if(isLocked){
+    notice.textContent = `Registrar Console is locked after too many incorrect passcode attempts. Try again in ${formatDuration(state.lockoutUntil - now)}.`;
+    notice.classList.add('show');
+    if(!registrarConsoleLockoutTimer){
+      registrarConsoleLockoutTimer = setInterval(updateRegistrarConsoleLockUI, 1000);
+    }
+  } else {
+    notice.classList.remove('show');
+    if(registrarConsoleLockoutTimer){
+      clearInterval(registrarConsoleLockoutTimer);
+      registrarConsoleLockoutTimer = null;
+    }
+  }
+  return isLocked;
+}
+updateRegistrarConsoleLockUI();
+
+// Reached whenever the "Registrar Console" nav tab is opened (see showPage).
+function openRegistrarConsole(){
+  if(updateRegistrarConsoleLockUI()){
+    document.getElementById('registrarConsoleLockGate').style.display = 'none';
+    document.getElementById('registrarConsoleContent').style.display = 'none';
+    return;
+  }
+  if(registrarConsoleUnlocked){
+    document.getElementById('registrarConsoleLockGate').style.display = 'none';
+    document.getElementById('registrarConsoleContent').style.display = 'block';
+  } else {
+    document.getElementById('registrarConsoleLockGate').style.display = 'block';
+    document.getElementById('registrarConsoleContent').style.display = 'none';
+    document.getElementById('registrarConsolePasscodeInput').value = '';
+    document.getElementById('registrarConsolePasscodeErr').classList.remove('show');
+    setTimeout(()=>document.getElementById('registrarConsolePasscodeInput').focus(), 50);
+  }
+}
+
+async function attemptRegistrarConsoleUnlock(){
+  const input = document.getElementById('registrarConsolePasscodeInput');
+  const err = document.getElementById('registrarConsolePasscodeErr');
+  const submitBtn = document.getElementById('registrarConsolePasscodeSubmit');
+
+  if(updateRegistrarConsoleLockUI()){
+    const state = getRegistrarConsoleLockState();
+    err.textContent = `Too many incorrect attempts. Please wait ${formatDuration(state.lockoutUntil - Date.now())} before trying again.`;
+    err.classList.add('show');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  const hash = await sha256(input.value);
+  const state = getRegistrarConsoleLockState();
+
+  if(hash === REGISTRAR_CONSOLE_PASSCODE_HASH){
+    registrarConsoleUnlocked = true;
+    saveRegistrarConsoleLockState({ failedAttempts:0, lockoutUntil:0, level:0 });
+    updateRegistrarConsoleLockUI();
+    err.classList.remove('show');
+    document.getElementById('registrarConsoleLockGate').style.display = 'none';
+    document.getElementById('registrarConsoleContent').style.display = 'block';
+  } else {
+    const failedAttempts = state.failedAttempts + 1;
+    input.value = '';
+    input.focus();
+
+    if(failedAttempts >= 5){
+      const level = state.level + 1;
+      const lockoutMinutes = Math.pow(5, level);
+      const lockoutUntil = Date.now() + lockoutMinutes * 60000;
+      saveRegistrarConsoleLockState({ failedAttempts:0, lockoutUntil, level });
+      err.textContent = `Too many incorrect attempts. Registrar Console is locked for ${lockoutMinutes} minute${lockoutMinutes===1?'':'s'}.`;
+      err.classList.add('show');
+      updateRegistrarConsoleLockUI();
+      document.getElementById('registrarConsoleLockGate').style.display = 'none';
+    } else {
+      saveRegistrarConsoleLockState({ failedAttempts, lockoutUntil: 0, level: state.level });
+      err.textContent = 'Incorrect passcode. Please try again.';
+      err.classList.add('show');
+    }
+  }
+  submitBtn.disabled = false;
+}
+
+document.getElementById('registrarConsolePasscodeSubmit').addEventListener('click', attemptRegistrarConsoleUnlock);
+document.getElementById('registrarConsolePasscodeInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); attemptRegistrarConsoleUnlock(); }
 });
 
 function escapeHtml(str){
