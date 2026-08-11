@@ -1703,13 +1703,9 @@
       <button class="quicklink-card" onclick="openQuizSection('status')">
         <div class="quicklink-icon">🔎</div>
         <h3>Check my Status</h3>
-        <p>Look up your registration status using your phone number and name.</p>
+        <p>Look up your registration status using your Application ID.</p>
       </button>
-      <button class="quicklink-card" onclick="openQuizSection('admin')">
-        <div class="quicklink-icon">🔐</div>
-        <h3>Registrar View</h3>
-        <p>Restricted access for the Registrar to review submissions.</p>
-      </button>
+      <!-- Registrar View has moved into the Registrar Console (top nav tab). -->
     </div>
   </div>
 
@@ -1950,14 +1946,19 @@
     <div class="card" id="statusCard">
       <h2>Check my Status</h2>
       <p class="desc">
-        Type your phone number and your full name &mdash; in this order: phone number,
-        Surname, First Name, Last Name &mdash; separated by spaces, exactly as you gave them at
-        registration. For example: <strong>08030000000 Okoro John Peter</strong>.
+        Type your Application ID exactly as it appears on your registration
+        &mdash; for example: <strong>CQC/2026/HPG/007</strong>.
+      </p>
+      <p class="desc" style="margin-top:8px;">
+        <strong>Don't remember your Application ID?</strong> When you submitted your
+        registration, you were sent an acknowledgement email from the Registrar
+        (<strong>interestincqc@outlook.com</strong>). Check that email &mdash; your
+        Application ID is stated in it.
       </p>
       <div class="field" data-field="statusQuery">
-        <label>Phone Number and Name<span class="req">*</span></label>
-        <input type="text" id="statusQuery" placeholder="e.g. 08030000000 Okoro John Peter">
-        <div class="err-msg">Please enter your phone number followed by your Surname, First Name, and Last Name.</div>
+        <label>Application ID<span class="req">*</span></label>
+        <input type="text" id="statusQuery" placeholder="e.g. CQC/2026/HPG/007">
+        <div class="err-msg">Please enter your Application ID.</div>
       </div>
       <div class="lock-err" id="statusErr" style="max-width:none;"></div>
       <div class="nav-btns" style="justify-content:flex-end;">
@@ -2065,11 +2066,76 @@
       <div id="registrarConsoleContent" style="display:none;">
         <p class="hint" style="margin-top:0;">Welcome — you're in. From here you can jump straight into the tools you use most.</p>
         <div class="ss-quicklinks" style="margin-top:6px;">
-          <button class="ss-quicklink-card" onclick="showPage('page-quiz')">
+          <button class="ss-quicklink-card" onclick="openQuizRegistrarViewFromConsole()">
             <div class="ql-icon">🏆</div>
             <h3>Quiz Contest Registrar View</h3>
             <p>Review, accept and manage Cornerstone Quiz Contest registrations.</p>
           </button>
+          <button class="ss-quicklink-card" onclick="openMaterialsManager()">
+            <div class="ql-icon">📚</div>
+            <h3>Class Materials Manager</h3>
+            <p>Upload PDF notes, share videos and post past questions to a class and subject — instantly available to students.</p>
+          </button>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════
+             CLASS MATERIALS MANAGER (inside Registrar Console)
+        ═══════════════════════════════════════════════════════ -->
+        <div id="materialsManagerView" style="display:none;margin-top:22px;">
+          <div class="foot-link" style="margin:0 0 18px;"><a onclick="closeMaterialsManager()">&larr; Back to Registrar Console</a></div>
+          <div class="card">
+            <h3>Upload a Resource</h3>
+            <p class="hint" style="margin-top:0;">Attach a resource to one class and subject. Students see it immediately under that subject's board, filtered by resource type.</p>
+
+            <div class="field" data-field="matSection">
+              <label>Section<span class="req">*</span></label>
+              <select id="matSection" onchange="onMaterialsSectionChange()">
+                <option value="junior">Junior Secondary (JSS1–JSS3)</option>
+                <option value="senior">Senior Secondary (Core / Departmental)</option>
+              </select>
+            </div>
+            <div class="field" data-field="matLevel">
+              <label>Class / Department<span class="req">*</span></label>
+              <select id="matLevel" onchange="onMaterialsLevelChange()"></select>
+            </div>
+            <div class="field" data-field="matSubject">
+              <label>Subject<span class="req">*</span></label>
+              <select id="matSubject"></select>
+            </div>
+            <div class="field" data-field="matType">
+              <label>Resource Type<span class="req">*</span></label>
+              <select id="matType" onchange="onMaterialsTypeChange()">
+                <option value="pdf">📄 PDF Notes</option>
+                <option value="video">🎬 Video (link)</option>
+                <option value="past">📝 Past Questions</option>
+              </select>
+            </div>
+            <div class="field" data-field="matTitle">
+              <label>Title</label>
+              <input type="text" id="matTitle" placeholder="e.g. Second Term Revision Notes">
+            </div>
+            <div class="field" data-field="matFile" id="matFileField">
+              <label>PDF File<span class="req">*</span></label>
+              <input type="file" id="matFile" accept="application/pdf">
+              <p class="hint" style="margin:6px 0 0;">Uploaded PDFs are stored in Google Drive and linked automatically — no need to host them elsewhere.</p>
+            </div>
+            <div class="field" data-field="matUrl" id="matUrlField" style="display:none;">
+              <label>Link (YouTube, Drive, etc.)<span class="req">*</span></label>
+              <input type="text" id="matUrl" placeholder="https://...">
+            </div>
+
+            <div class="lock-err" id="matUploadErr" style="max-width:none;"></div>
+            <div class="nav-btns" style="justify-content:flex-end;">
+              <button class="btn-primary" id="matUploadBtn" onclick="submitMaterial()">Upload</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:18px;">
+            <h3>Uploaded Resources</h3>
+            <p class="hint" style="margin-top:0;">Everything uploaded so far, most recent first.</p>
+            <div id="matListEmpty" class="empty-state">Loading resources…</div>
+            <div id="matList"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2255,9 +2321,12 @@ function renderJuniorGrid(level){
     var res = levelResources[s.key] || {};
     var rows = JUNIOR_RESOURCE_TYPES.filter(function(rt){ return filters[rt.key]; }).map(function(rt){
       var available = !!res[rt.key];
+      var statusInner = available
+        ? '<a href="' + escapeHtmlSafe(res[rt.key]) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Open ↗</a>'
+        : 'Coming soon';
       return '<div class="bc-resource-row"><span>' + rt.icon + ' ' + rt.label + '</span>'
         + '<span class="bc-status"' + (available ? ' style="background:var(--success-bg);color:var(--success);"' : '') + '>'
-        + (available ? 'Available' : 'Coming soon') + '</span></div>';
+        + statusInner + '</span></div>';
     }).join('');
     return '<div class="board-card">'
       + '<div class="bc-top"><div class="bc-icon">' + s.icon + '</div>'
@@ -2362,9 +2431,12 @@ function renderTriGrid(group){
     var res = groupResources[s.key] || {};
     var rows = TRI_RESOURCE_TYPES.filter(function(rt){ return filters[rt.key]; }).map(function(rt){
       var available = !!res[rt.key];
+      var statusInner = available
+        ? '<a href="' + escapeHtmlSafe(res[rt.key]) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">Open ↗</a>'
+        : 'Coming soon';
       return '<div class="bc-resource-row"><span>' + rt.icon + ' ' + rt.label + '</span>'
         + '<span class="bc-status"' + (available ? ' style="background:var(--success-bg);color:var(--success);"' : '') + '>'
-        + (available ? 'Available' : 'Coming soon') + '</span></div>';
+        + statusInner + '</span></div>';
     }).join('');
     var iconStyle = s.iconBg ? ' style="background:' + s.iconBg + ';"' : '';
     return '<div class="board-card">'
@@ -2389,6 +2461,36 @@ function resetTriPath(){
   document.getElementById('triGatekeeper').style.display = 'block';
   window.scrollTo({top:0, behavior:'smooth'});
 }
+
+// ─── CLASS MATERIALS: PUBLIC LOADER ──────────────────────────
+// Pulls every uploaded/linked resource from the backend once on page load
+// and fills in JUNIOR_RESOURCES / TRI_RESOURCES (previously populated only
+// by hand-editing this file) so the Junior and Senior subject boards show
+// real "Available" links the moment the Registrar uploads something —
+// no redeploy needed. Silently does nothing if the backend is unreachable,
+// so the site still works (just showing "Coming soon" everywhere) offline.
+async function loadPublicMaterials(){
+  try{
+    const res = await callBackend('listMaterials', {});
+    (res.records || []).forEach(function(m){
+      if(m.section === 'junior'){
+        if(!JUNIOR_RESOURCES[m.level]) JUNIOR_RESOURCES[m.level] = {};
+        if(!JUNIOR_RESOURCES[m.level][m.subjectKey]) JUNIOR_RESOURCES[m.level][m.subjectKey] = {};
+        JUNIOR_RESOURCES[m.level][m.subjectKey][m.type] = m.url;
+      } else if(m.section === 'senior'){
+        if(!TRI_RESOURCES[m.level]) TRI_RESOURCES[m.level] = {};
+        if(!TRI_RESOURCES[m.level][m.subjectKey]) TRI_RESOURCES[m.level][m.subjectKey] = {};
+        TRI_RESOURCES[m.level][m.subjectKey][m.type] = m.url;
+      }
+    });
+    JUNIOR_LEVELS.forEach(renderJuniorPage);
+    if(currentTriGroup) renderTriGrid(currentTriGroup);
+  }catch(e){
+    console.error('Could not load class materials', e);
+  }
+}
+document.addEventListener('DOMContentLoaded', loadPublicMaterials);
+if(document.readyState !== 'loading'){ loadPublicMaterials(); }
 
 // ─── ADVANCED STEM LABORATORY VISUALIZATION ──────────────────
 // Each entry is a WAEC-syllabus practical. `video` is left blank until
@@ -3111,15 +3213,12 @@ function backToQuizMenu(){
 }
 
 // ─── CHECK MY STATUS ────────────────────────────────────────
-// The candidate types one line: phone number, then Surname, First Name,
-// Last Name, separated by spaces (e.g. "08030000000 Okoro John Peter").
-// We split off the first whitespace-separated token as the phone number
-// and require exactly three words after it for the name.
+// The candidate now looks their registration up with their Application ID
+// alone (e.g. "CQC/2026/HPG/007") — no phone number or name required.
 function parseStatusQuery(raw){
-  const tokens = String(raw || '').trim().split(/\s+/).filter(Boolean);
-  if(tokens.length !== 4) return null;
-  const [phone, surname, firstName, lastName] = tokens;
-  return { phone, surname, firstName, lastName };
+  const applicationId = String(raw || '').trim();
+  if(!applicationId) return null;
+  return { applicationId };
 }
 
 let lastStatusRecord = null;
@@ -3137,7 +3236,7 @@ async function lookupStatus(){
   lastStatusRecord = null;
 
   if(!parsed){
-    errEl.textContent = 'Please enter your phone number followed by your Surname, First Name, and Last Name — e.g. 08030000000 Okoro John Peter.';
+    errEl.textContent = 'Please enter your Application ID.';
     errEl.classList.add('show');
     return;
   }
@@ -3181,7 +3280,7 @@ async function lookupStatus(){
     }
   }catch(e){
     console.error('Status lookup failed', e);
-    errEl.textContent = (e && e.message) ? e.message : 'We could not find a registration matching that phone number and name.';
+    errEl.textContent = (e && e.message) ? e.message : 'We could not find a registration matching that Application ID.';
     errEl.classList.add('show');
   }
   btn.disabled = false;
@@ -3264,8 +3363,7 @@ function openQuizSection(section){
     }
   } else if(section === 'status'){
     document.getElementById('quizStatusView').style.display = '';
-    document.getElementById('statusAppId').value = '';
-    document.getElementById('statusPhone').value = '';
+    document.getElementById('statusQuery').value = '';
     document.getElementById('statusErr').classList.remove('show');
     document.getElementById('statusResult').innerHTML = '';
     document.querySelectorAll('#quizStatusView .field.invalid').forEach(f=>f.classList.remove('invalid'));
@@ -4515,6 +4613,168 @@ document.getElementById('registrarConsolePasscodeSubmit').addEventListener('clic
 document.getElementById('registrarConsolePasscodeInput').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); attemptRegistrarConsoleUnlock(); }
 });
+
+// The Quiz Contest Registrar View now lives here in the Registrar Console —
+// this jumps to the Quiz Contest page and opens the admin panel directly,
+// skipping its 4-option menu (which no longer offers "Registrar View").
+function openQuizRegistrarViewFromConsole(){
+  showPage('page-quiz');
+  openQuizSection('admin');
+}
+
+// ─── CLASS MATERIALS MANAGER (Registrar Console) ─────────────
+const MATERIALS_LEVEL_OPTIONS = {
+  junior: [
+    { value:'JSS1', label:'JSS 1' },
+    { value:'JSS2', label:'JSS 2' },
+    { value:'JSS3', label:'JSS 3' }
+  ],
+  senior: [
+    { value:'CORE', label:'Core Compulsory Subjects' },
+    { value:'SCI',  label:'Sciences' },
+    { value:'HUM',  label:'Humanities / Arts' },
+    { value:'BUS',  label:'Business / Commercial' }
+  ]
+};
+let materialsListLoaded = false;
+
+function openMaterialsManager(){
+  document.getElementById('materialsManagerView').style.display = 'block';
+  document.querySelector('#registrarConsoleContent > .ss-quicklinks').style.display = 'none';
+  onMaterialsSectionChange();
+  onMaterialsTypeChange();
+  if(!materialsListLoaded){ loadMaterialsList(); }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function closeMaterialsManager(){
+  document.getElementById('materialsManagerView').style.display = 'none';
+  document.querySelector('#registrarConsoleContent > .ss-quicklinks').style.display = '';
+}
+
+function onMaterialsSectionChange(){
+  const section = document.getElementById('matSection').value;
+  const levelSel = document.getElementById('matLevel');
+  levelSel.innerHTML = MATERIALS_LEVEL_OPTIONS[section].map(function(l){
+    return '<option value="' + l.value + '">' + l.label + '</option>';
+  }).join('');
+  onMaterialsLevelChange();
+}
+function onMaterialsLevelChange(){
+  const section = document.getElementById('matSection').value;
+  const level = document.getElementById('matLevel').value;
+  const subjects = section === 'junior' ? JUNIOR_SUBJECTS : (TRI_SUBJECTS[level] || []);
+  document.getElementById('matSubject').innerHTML = subjects.map(function(s){
+    return '<option value="' + s.key + '" data-name="' + escapeHtmlSafe(s.name) + '">' + s.name + '</option>';
+  }).join('');
+}
+function onMaterialsTypeChange(){
+  const type = document.getElementById('matType').value;
+  const isFile = type === 'pdf'; // Past Questions and Video are both link-based here; PDFs upload directly.
+  document.getElementById('matFileField').style.display = isFile ? '' : 'none';
+  document.getElementById('matUrlField').style.display = isFile ? 'none' : '';
+  const urlLabel = type === 'video' ? 'Video Link (YouTube, etc.)<span class="req">*</span>' : 'Link to Past Questions<span class="req">*</span>';
+  document.querySelector('#matUrlField label').innerHTML = urlLabel;
+}
+function fileToBase64(file){
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onload = function(){ resolve(reader.result); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submitMaterial(){
+  const errEl = document.getElementById('matUploadErr');
+  const btn = document.getElementById('matUploadBtn');
+  errEl.classList.remove('show');
+
+  const section = document.getElementById('matSection').value;
+  const level = document.getElementById('matLevel').value;
+  const subjectSel = document.getElementById('matSubject');
+  const subjectKey = subjectSel.value;
+  const subjectName = subjectSel.selectedOptions[0] ? subjectSel.selectedOptions[0].getAttribute('data-name') : '';
+  const type = document.getElementById('matType').value;
+  const title = document.getElementById('matTitle').value.trim();
+
+  const payload = { section, level, subjectKey, subjectName, type, title };
+
+  if(type === 'pdf'){
+    const fileInput = document.getElementById('matFile');
+    const file = fileInput.files && fileInput.files[0];
+    if(!file){
+      errEl.textContent = 'Please choose a PDF file to upload.';
+      errEl.classList.add('show');
+      return;
+    }
+    payload.fileData = await fileToBase64(file);
+    payload.fileName = file.name;
+  } else {
+    const url = document.getElementById('matUrl').value.trim();
+    if(!url){
+      errEl.textContent = 'Please provide a link.';
+      errEl.classList.add('show');
+      return;
+    }
+    payload.url = url;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  try{
+    await callBackend('uploadMaterial', { data: payload });
+    document.getElementById('matTitle').value = '';
+    document.getElementById('matUrl').value = '';
+    document.getElementById('matFile').value = '';
+    materialsListLoaded = false;
+    loadMaterialsList();
+  }catch(e){
+    errEl.textContent = (e && e.message) ? e.message : 'Upload failed. Please try again.';
+    errEl.classList.add('show');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Upload';
+}
+
+async function loadMaterialsList(){
+  const emptyEl = document.getElementById('matListEmpty');
+  const listEl = document.getElementById('matList');
+  emptyEl.style.display = '';
+  emptyEl.textContent = 'Loading resources…';
+  listEl.innerHTML = '';
+  try{
+    const res = await callBackend('listMaterials', {});
+    materialsListLoaded = true;
+    const records = (res.records || []).slice().reverse();
+    if(records.length === 0){
+      emptyEl.textContent = 'No resources uploaded yet.';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    const typeIcon = { video:'🎬', pdf:'📄', past:'📝' };
+    listEl.innerHTML = records.map(function(m){
+      return '<div class="bc-resource-row" style="margin-bottom:8px;">'
+        + '<span>' + (typeIcon[m.type] || '📎') + ' <strong>' + escapeHtmlSafe(m.subjectName || m.subjectKey) + '</strong>'
+        + ' — ' + escapeHtmlSafe(m.level) + (m.title ? (' · ' + escapeHtmlSafe(m.title)) : '')
+        + ' — <a href="' + escapeHtmlSafe(m.url) + '" target="_blank" rel="noopener">view</a></span>'
+        + '<button class="btn-delete" style="padding:4px 12px;font-size:11px;" onclick="deleteMaterialItem(\'' + m.materialId + '\')">Delete</button>'
+        + '</div>';
+    }).join('');
+  }catch(e){
+    emptyEl.textContent = 'Could not load resources. Please try again.';
+  }
+}
+
+async function deleteMaterialItem(materialId){
+  if(!confirm('Delete this resource? Students will no longer see it.')) return;
+  try{
+    await callBackend('deleteMaterial', { materialId: materialId });
+    materialsListLoaded = false;
+    loadMaterialsList();
+  }catch(e){
+    alert((e && e.message) ? e.message : 'Delete failed. Please try again.');
+  }
+}
 
 function escapeHtml(str){
   return String(str||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
