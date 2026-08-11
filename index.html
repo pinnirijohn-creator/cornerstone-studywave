@@ -437,6 +437,12 @@
     box-shadow:0 6px 20px rgba(212,160,23,0.45);
     transform:translateY(-2px);
   }
+  .save-progress-feedback{
+    text-align:center;font-size:12.5px;font-weight:600;margin-top:10px;
+    min-height:16px;transition:var(--transition);
+  }
+  .save-progress-feedback.ok{color:var(--success);}
+  .save-progress-feedback.err{color:var(--error);}
 
   /* ═══════════════════════════════════════════════════════════
      CONFIRMATION / SUCCESS SCREEN
@@ -1728,11 +1734,41 @@
 
   <div class="stepper" id="stepper"></div>
 
+  <div class="card" id="continueLoginCard" style="display:none;">
+    <h2>Continue Your Registration</h2>
+    <p class="desc">
+      Enter your name exactly as you did when you started your registration
+      (and whenever you clicked "Save Progress"), and we'll take you back to
+      right where you left off &mdash; even on a different device.
+    </p>
+    <div class="row-2">
+      <div class="field" data-field="continueSurname">
+        <label>Surname<span class="req">*</span></label>
+        <input type="text" id="continueSurname" placeholder="e.g. Gyang">
+      </div>
+      <div class="field" data-field="continueFirstName">
+        <label>First Name<span class="req">*</span></label>
+        <input type="text" id="continueFirstName" placeholder="e.g. Daniel">
+      </div>
+    </div>
+    <div class="field" data-field="continueLastName">
+      <label>Last Name<span class="req">*</span></label>
+      <input type="text" id="continueLastName" placeholder="e.g. Pam">
+    </div>
+    <div class="lock-err" id="continueLoginErr"></div>
+    <div class="nav-btns" style="justify-content:flex-end;border-top:none;margin-top:18px;padding-top:0;">
+      <button class="btn-primary" id="continueLoginBtn">Find My Registration</button>
+    </div>
+  </div>
+
   <div class="card" id="noDraftCard" style="display:none;">
     <div class="closed-icon">📭</div>
     <h2>No Saved Registration Found</h2>
-    <p class="desc">We couldn't find a registration in progress on this device. You can start a fresh registration instead.</p>
-    <p class="desc" style="margin-top:18px;"><button class="btn-primary" onclick="openQuizSection('fresh')">Start Fresh Registration</button></p>
+    <p class="desc">We couldn't find a saved registration under that name. Double-check the spelling and try again &mdash; it must match exactly what you entered on the Bio Data step (and when you clicked "Save Progress"). If you haven't saved progress yet, or this is your first time, you can start a fresh registration instead.</p>
+    <p class="desc" style="margin-top:18px;">
+      <button class="btn-ghost" onclick="openQuizSection('continue')">&larr; Try a Different Name</button>
+      <button class="btn-primary" onclick="openQuizSection('fresh')">Start Fresh Registration</button>
+    </p>
   </div>
 
   <div class="card" id="closedCard" style="display:none;">
@@ -1932,9 +1968,12 @@
     <div class="nav-btns" id="navBtns">
       <button class="btn-ghost" id="backBtn">Back</button>
       <div class="spacer"></div>
+      <button class="btn-gold" id="saveProgressBtn" type="button">💾 Save Progress</button>
+      <div class="spacer"></div>
       <button class="btn-primary" id="nextBtn">Next</button>
       <button class="btn-primary" id="submitBtn" style="display:none;" disabled>Submit Registration</button>
     </div>
+    <div class="save-progress-feedback" id="saveProgressFeedback"></div>
   </div>
   </div>
 
@@ -1946,8 +1985,10 @@
     <div class="card" id="statusCard">
       <h2>Check my Status</h2>
       <p class="desc">
-        Type your Application ID exactly as it appears on your registration
-        &mdash; for example: <strong>CQC/2026/HPG/007</strong>.
+        The <strong>CQC/<span id="statusYearHint"></span>/HPG/</strong> part is
+        the same for every candidate and is filled in for you below. Just type
+        your Level (S2, S3, or Other), Field of Study (SCI, ART, or COM) and
+        your Serial Number &mdash; the "/" will appear automatically as you go.
       </p>
       <p class="desc" style="margin-top:8px;">
         <strong>Don't remember your Application ID?</strong> When you submitted your
@@ -1957,7 +1998,7 @@
       </p>
       <div class="field" data-field="statusQuery">
         <label>Application ID<span class="req">*</span></label>
-        <input type="text" id="statusQuery" placeholder="e.g. CQC/2026/HPG/007">
+        <input type="text" id="statusQuery" placeholder="e.g. CQC/2026/HPG/S2/SCI/007" autocomplete="off">
         <div class="err-msg">Please enter your Application ID.</div>
       </div>
       <div class="lock-err" id="statusErr" style="max-width:none;"></div>
@@ -3210,11 +3251,140 @@ function backToQuizMenu(){
   document.getElementById('quizFormView').style.display = 'none';
   document.getElementById('quizStatusView').style.display = 'none';
   document.getElementById('quizAdminView').style.display = 'none';
+  document.getElementById('continueLoginCard').style.display = 'none';
 }
+
+// ─── SAVE PROGRESS (server-side, resumable from any device) ───
+// Writes the candidate's current in-progress answers to the backend,
+// keyed by their normalized full name, so "Continue Registration" can
+// pull them back up later on any device — not just this browser. This is
+// in addition to (not instead of) the existing localStorage autosave,
+// which still covers same-device convenience for candidates who haven't
+// gotten around to clicking this button yet.
+document.getElementById('saveProgressBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('saveProgressBtn');
+  const feedback = document.getElementById('saveProgressFeedback');
+  const surnameEl = document.getElementById('surname');
+  const firstNameEl = document.getElementById('firstName');
+  const lastNameEl = document.getElementById('lastName');
+
+  feedback.className = 'save-progress-feedback';
+  feedback.textContent = '';
+
+  const surname = surnameEl.value.trim();
+  const firstName = firstNameEl.value.trim();
+  const lastName = lastNameEl.value.trim();
+  if(!surname || !firstName || !lastName){
+    feedback.classList.add('err');
+    feedback.textContent = 'Please fill in your Surname, First Name and Last Name (on the Bio Data step) before saving progress.';
+    if(currentStep !== 0){ currentStep = 0; render(); }
+    [surnameEl,firstNameEl,lastNameEl].forEach(el=>{ if(!el.value.trim()) el.closest('.field').classList.add('invalid'); });
+    return;
+  }
+
+  saveStepData(currentStep);
+  saveDraft(); // keep the same-device localStorage draft in sync too
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try{
+    await callBackend('saveProgress', { data: collectDraftFromDOM() });
+    feedback.classList.add('ok');
+    feedback.textContent = '✓ Progress saved. You can continue later on any device using your name.';
+  }catch(e){
+    feedback.classList.add('err');
+    feedback.textContent = 'Could not save progress right now. Please check your connection and try again.';
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+});
+
+// ─── CONTINUE REGISTRATION (name login, works across devices) ─────────
+// The candidate identifies themselves with their Name (Surname, First
+// Name, Last Name — matching whatever they typed on the Bio Data step and
+// used with "Save Progress"). We first ask the backend for their saved
+// progress; if the backend has nothing (e.g. they never clicked "Save
+// Progress" but are still on the same device/browser), we fall back to
+// the local autosave draft as long as its saved name matches what they
+// typed here.
+function namesMatchDraft(values, surname, firstName, lastName){
+  const norm = s => String(s||'').trim().toLowerCase();
+  return values && norm(values.surname)===norm(surname) &&
+         norm(values.firstName)===norm(firstName) && norm(values.lastName)===norm(lastName);
+}
+
+function showContinueForm(draft){
+  document.getElementById('continueLoginCard').style.display = 'none';
+  document.getElementById('noDraftCard').style.display = 'none';
+  document.getElementById('formCard').style.display = '';
+  document.querySelector('#quizFormView .stepper').style.display = '';
+  applyDraftToForm(draft);
+  checkRegistrationStatus();
+}
+
+document.getElementById('continueLoginBtn').addEventListener('click', async ()=>{
+  const sEl = document.getElementById('continueSurname');
+  const fEl = document.getElementById('continueFirstName');
+  const lEl = document.getElementById('continueLastName');
+  const errEl = document.getElementById('continueLoginErr');
+  const btn = document.getElementById('continueLoginBtn');
+
+  [sEl,fEl,lEl].forEach(el=>el.closest('.field').classList.remove('invalid'));
+  errEl.classList.remove('show');
+
+  const surname = sEl.value.trim();
+  const firstName = fEl.value.trim();
+  const lastName = lEl.value.trim();
+  let missing = false;
+  [[sEl,surname],[fEl,firstName],[lEl,lastName]].forEach(([el,val])=>{
+    if(!val){ el.closest('.field').classList.add('invalid'); missing = true; }
+  });
+  if(missing){
+    errEl.textContent = 'Please enter your Surname, First Name and Last Name.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Searching…';
+  try{
+    const result = await callBackend('loadProgress', { data: { surname, firstName, lastName } });
+    if(result.found){
+      showContinueForm({
+        step: result.step,
+        values: result.values,
+        otherLevelConfirmed: result.otherLevelConfirmed,
+        otherSchoolConfirmed: result.otherSchoolConfirmed
+      });
+      return;
+    }
+    const local = loadDraft();
+    if(local && namesMatchDraft(local.values, surname, firstName, lastName)){
+      showContinueForm(local);
+      return;
+    }
+    document.getElementById('continueLoginCard').style.display = 'none';
+    document.getElementById('formCard').style.display = 'none';
+    document.querySelector('#quizFormView .stepper').style.display = 'none';
+    document.getElementById('noDraftCard').style.display = 'block';
+  }catch(e){
+    errEl.textContent = 'Something went wrong while looking up your registration. Please check your connection and try again.';
+    errEl.classList.add('show');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+});
 
 // ─── CHECK MY STATUS ────────────────────────────────────────
 // The candidate now looks their registration up with their Application ID
-// alone (e.g. "CQC/2026/HPG/007") — no phone number or name required.
+// alone (e.g. "CQC/2026/HPG/S2/SCI/007") — no phone number or name required.
+// The input auto-fills the constant "CQC/<year>/HPG/" prefix and, as the
+// candidate types their Level, Field of Study and Serial Number, inserts
+// the "/" separators automatically — see formatStatusInput() below.
 function parseStatusQuery(raw){
   const applicationId = String(raw || '').trim();
   if(!applicationId) return null;
@@ -3291,6 +3461,66 @@ document.getElementById('statusQuery').addEventListener('keydown', (e)=>{
   if(e.key === 'Enter'){ e.preventDefault(); lookupStatus(); }
 });
 
+// ── Application ID auto-formatting ──────────────────────────────
+// Real Application IDs look like CQC/2026/HPG/S2/SCI/007 (Level / Field of
+// Study / Serial Number). The "CQC/<year>/HPG/" part is fixed and the same
+// for every candidate, so it's pre-filled and locked. As the candidate
+// types the two remaining codes, a "/" is inserted automatically the
+// moment each segment is recognisably complete, so they never have to
+// type "/" themselves. The Serial Number is left as free digits since
+// it's the final segment (nothing needs to follow it).
+function statusIdPrefix(){
+  return `CQC/${new Date().getFullYear()}/HPG/`;
+}
+const STATUS_LEVEL_CODES = ['S2','S3','OTHER'];
+const STATUS_FIELD_CODES = ['SCI','ART','COM'];
+
+function formatStatusInput(){
+  const el = document.getElementById('statusQuery');
+  const prefix = statusIdPrefix();
+  let raw = el.value.toUpperCase();
+
+  // The prefix is fixed — if it's missing (fresh focus, or the candidate
+  // tried to delete into it), restore it rather than letting them edit it.
+  if(raw.indexOf(prefix) !== 0){
+    raw = prefix + raw.replace(/^C?Q?C?\/?\d*\/?H?P?G?\/?/,'').replace(/[^A-Z0-9/]/g,'');
+  }
+  const suffix = raw.slice(prefix.length);
+  const segments = suffix.split('/');
+
+  // Segment 0: Level (S2, S3 or OTHER) — auto-insert "/" once it's an
+  // exact, recognised code.
+  let level = (segments[0]||'').replace(/[^A-Z0-9]/g,'');
+  let rest = segments.slice(1).join('/');
+  let out = prefix;
+  if(STATUS_LEVEL_CODES.includes(level)){
+    out += level + '/';
+  } else {
+    out += level;
+    el.value = out;
+    return;
+  }
+
+  // Segment 1: Field of Study (SCI, ART or COM) — always 3 letters, so
+  // auto-insert "/" as soon as 3 letters have been typed.
+  const restSegments = rest.split('/');
+  let field = (restSegments[0]||'').replace(/[^A-Z]/g,'').slice(0,3);
+  let afterField = restSegments.slice(1).join('/');
+  if(field.length === 3){
+    out += field + '/';
+  } else {
+    out += field;
+    el.value = out;
+    return;
+  }
+
+  // Segment 2: Serial Number — digits only, final segment, no auto "/".
+  const serial = afterField.replace(/[^0-9]/g,'');
+  out += serial;
+  el.value = out;
+}
+document.getElementById('statusQuery').addEventListener('input', formatStatusInput);
+
 // Exactly the same congratulatory wording the Registrar's own email uses
 // when they click "Accept" — kept in one place so both stay in sync.
 function buildAcceptanceEmailBody(record){
@@ -3340,33 +3570,41 @@ function openQuizSection(section){
   document.getElementById('quizFormView').style.display = 'none';
   document.getElementById('quizStatusView').style.display = 'none';
   document.getElementById('quizAdminView').style.display = 'none';
+  document.getElementById('continueLoginCard').style.display = 'none';
+  const spFeedback = document.getElementById('saveProgressFeedback');
+  spFeedback.style.display = '';
+  spFeedback.textContent = '';
+  spFeedback.className = 'save-progress-feedback';
 
   if(section === 'fresh'){
     document.getElementById('quizFormView').style.display = '';
     document.getElementById('noDraftCard').style.display = 'none';
     document.getElementById('formCard').style.display = '';
+    document.querySelector('#quizFormView .stepper').style.display = '';
     resetFormFields();
     render();
     checkRegistrationStatus();
   } else if(section === 'continue'){
     document.getElementById('quizFormView').style.display = '';
-    const draft = loadDraft();
-    if(draft){
-      document.getElementById('noDraftCard').style.display = 'none';
-      document.getElementById('formCard').style.display = '';
-      applyDraftToForm(draft);
-      checkRegistrationStatus();
-    } else {
-      document.getElementById('formCard').style.display = 'none';
-      document.querySelector('#quizFormView .stepper').style.display = 'none';
-      document.getElementById('noDraftCard').style.display = 'block';
-    }
+    document.getElementById('formCard').style.display = 'none';
+    document.querySelector('#quizFormView .stepper').style.display = 'none';
+    document.getElementById('noDraftCard').style.display = 'none';
+    document.getElementById('continueLoginCard').style.display = 'block';
+    document.getElementById('continueSurname').value = '';
+    document.getElementById('continueFirstName').value = '';
+    document.getElementById('continueLastName').value = '';
+    document.getElementById('continueLoginErr').classList.remove('show');
+    document.querySelectorAll('#continueLoginCard .field.invalid').forEach(f=>f.classList.remove('invalid'));
+    document.getElementById('continueSurname').focus();
   } else if(section === 'status'){
     document.getElementById('quizStatusView').style.display = '';
-    document.getElementById('statusQuery').value = '';
+    document.getElementById('statusYearHint').textContent = new Date().getFullYear();
+    document.getElementById('statusQuery').value = statusIdPrefix();
     document.getElementById('statusErr').classList.remove('show');
     document.getElementById('statusResult').innerHTML = '';
     document.querySelectorAll('#quizStatusView .field.invalid').forEach(f=>f.classList.remove('invalid'));
+    const qEl = document.getElementById('statusQuery');
+    setTimeout(()=>{ qEl.focus(); qEl.setSelectionRange(qEl.value.length, qEl.value.length); }, 0);
   } else if(section === 'admin'){
     document.getElementById('quizAdminView').style.display = '';
     openRegistrarView();
@@ -3531,6 +3769,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     document.getElementById('confirmId').textContent = generatedId;
     showPanel('confirm');
     document.getElementById('navBtns').style.display = 'none';
+    document.getElementById('saveProgressFeedback').style.display = 'none';
     document.querySelector('.stepper').style.display = 'none';
     // The registration is now submitted (or matched an existing one) — there
     // is nothing left to "continue", so remove the autosaved draft.
