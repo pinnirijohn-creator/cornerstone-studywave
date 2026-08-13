@@ -2014,22 +2014,16 @@
   ═══════════════════════════════════════════════════════════ -->
   <div id="quizAdminView" style="display:none;">
     <div class="foot-link" style="margin:0 0 20px;"><a onclick="backToQuizMenu()">&larr; Back to Registration Menu</a></div>
-    <div class="lock-err" id="adminLockNotice" style="max-width:440px;margin:0 auto 12px;"></div>
 
+    <!-- No passcode gate here: this view is only ever reached from inside
+         the Registrar Console (see openQuizRegistrarViewFromConsole()),
+         which is already passcode-protected. A second gate here would just
+         be a redundant, weaker (client-side) copy of that same check. -->
     <div class="admin-panel" id="adminPanel">
       <h3>Registrar View</h3>
       <p class="hint">All registrations recorded on this device/session are shown here (data is shared across everyone using this form). Use this as your working register alongside emailed notifications.</p>
 
-      <div class="lock-gate" id="lockGate">
-        <p>This area is restricted. Enter the Registrar passcode to view submitted registrations.</p>
-        <div class="lock-row">
-          <input type="password" id="passcodeInput" placeholder="Enter passcode">
-          <button class="btn-primary" id="passcodeSubmit">Unlock</button>
-        </div>
-        <div class="lock-err" id="passcodeErr">Incorrect passcode. Please try again.</div>
-      </div>
-
-      <div id="adminContent" style="display:none;"><div class="empty-state">Loading registrations…</div></div>
+      <div id="adminContent"><div class="empty-state">Loading registrations…</div></div>
     </div>
   </div>
 
@@ -4535,51 +4529,15 @@ Graduation Year: ${data.gradYear || 'Not specified'}`
   window.location.href = `mailto:interestincqc@outlook.com?subject=${subject}&body=${body}`;
 });
 
-// Admin / Registrar view — passcode protected
-// The passcode itself is never stored as plain text in the page source — only
-// its SHA-256 hash is kept here, and attempts are checked against that hash.
-// This raises the bar well above a casual visitor reading the source, but it's
-// still a client-side check, so it isn't a substitute for real server-side auth
-// (see the note further down on ESCALATING LOCKOUT for the same caveat).
-const REGISTRAR_PASSCODE_HASH = '5ad401c7f4d9f06cf1c86ec2278337013a35e5ca4d9140ed6e512dbc11e0a164';
-let adminUnlocked = false;
+// Admin / Registrar view.
+// This view has no passcode gate of its own: it's only ever reached from
+// inside the Registrar Console (openQuizRegistrarViewFromConsole(), further
+// down), which already requires the Registrar Console passcode — verified
+// server-side, see attemptRegistrarConsoleUnlock(). A second, independent
+// gate here would just be a redundant, weaker copy of that same check.
 
-// ─── ESCALATING LOCKOUT ─────────────────────────────────────────────────
-// After every 5 consecutive wrong passcode attempts, the Registrar View is
-// locked out for 5 minutes. If another 5 wrong attempts follow the next
-// time it's tried, the lockout jumps to 5×5 = 25 minutes, then 5×5×5 = 125
-// minutes, and so on (5^level minutes). The lockout is stored in
-// localStorage (not just an in-memory variable) so it survives a page
-// reload or the tab being closed and reopened — otherwise someone could
-// dodge the lockout just by refreshing the page. A successful unlock clears
-// the lockout state entirely.
-//
-// Caveat: like the passcode hash above, this is enforced entirely in the
-// visitor's own browser. Someone who clears their browser storage (or uses
-// a different browser/device/incognito window) restarts the count. It's
-// meant to discourage casual guessing, not to stop a determined attacker —
-// true rate-limiting would need to live on the server side.
-const ADMIN_LOCK_KEY = 'cqcAdminLockState';
-
-function getLockState(){
-  try{
-    const raw = localStorage.getItem(ADMIN_LOCK_KEY);
-    if(!raw) return { failedAttempts:0, lockoutUntil:0, level:0 };
-    const parsed = JSON.parse(raw);
-    return {
-      failedAttempts: Number(parsed.failedAttempts) || 0,
-      lockoutUntil: Number(parsed.lockoutUntil) || 0,
-      level: Number(parsed.level) || 0
-    };
-  }catch(e){
-    return { failedAttempts:0, lockoutUntil:0, level:0 };
-  }
-}
-
-function saveLockState(state){
-  try{ localStorage.setItem(ADMIN_LOCK_KEY, JSON.stringify(state)); }catch(e){}
-}
-
+// formatDuration() is used by the Registrar Console's escalating lockout,
+// further down.
 function formatDuration(ms){
   const totalSeconds = Math.max(0, Math.ceil(ms/1000));
   const mins = Math.floor(totalSeconds/60);
@@ -4587,38 +4545,6 @@ function formatDuration(ms){
   if(mins > 0) return `${mins}m ${String(secs).padStart(2,'0')}s`;
   return `${secs}s`;
 }
-
-let lockoutCountdownTimer = null;
-
-// Reflects the current lockout (if any) in the small notice under the
-// "Registrar View" link, and returns whether it's currently locked. Safe to
-// call at any time (page load, before opening the panel, before checking a
-// passcode) since it always re-reads localStorage first.
-function updateAdminLockUI(){
-  const state = getLockState();
-  const now = Date.now();
-  const notice = document.getElementById('adminLockNotice');
-  const isLocked = now < state.lockoutUntil;
-
-  if(isLocked){
-    notice.textContent = `Registrar View is locked after too many incorrect passcode attempts. Try again in ${formatDuration(state.lockoutUntil - now)}.`;
-    notice.classList.add('show');
-    if(!lockoutCountdownTimer){
-      lockoutCountdownTimer = setInterval(updateAdminLockUI, 1000);
-    }
-  } else {
-    notice.classList.remove('show');
-    if(lockoutCountdownTimer){
-      clearInterval(lockoutCountdownTimer);
-      lockoutCountdownTimer = null;
-    }
-  }
-  return isLocked;
-}
-
-// Check on page load in case a lockout from an earlier visit is still active.
-updateAdminLockUI();
-// ─────────────────────────────────────────────────────────────────────────
 
 // The bulk answer-slip download is only armed immediately after an explicit
 // "Refresh List" click, and is disarmed by a page reload or by any edit to
@@ -4636,109 +4562,25 @@ function invalidateBulkAnswerSlip(){
 document.getElementById('formCard').addEventListener('input', invalidateBulkAnswerSlip);
 document.getElementById('formCard').addEventListener('change', invalidateBulkAnswerSlip);
 
-async function sha256(text){
-  const enc = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-// Opens the Registrar View. Reached from the "Registrar View" card on the
-// registration menu (openQuizSection('admin')) — the outer #quizAdminView
-// container is shown/hidden by openQuizSection/backToQuizMenu, and this
-// function is responsible for the passcode gate + lockout state inside it.
+// Opens the Registrar View. Reached only from inside the Registrar Console
+// via openQuizRegistrarViewFromConsole() — access is already gated by the
+// Registrar Console passcode, so this just shows the panel and loads data.
 function openRegistrarView(){
-  if(updateAdminLockUI()){
-    // Locked out: the passcode gate must not open at all. The countdown
-    // notice above (kept up to date by updateAdminLockUI) already tells the
-    // Registrar how long is left, so there's nothing more to do.
-    document.getElementById('adminPanel').classList.remove('active');
-    return;
-  }
-
   const panel = document.getElementById('adminPanel');
   panel.classList.add('active');
-
-  if(adminUnlocked){
-    document.getElementById('lockGate').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    loadAdminData();
-  } else {
-    document.getElementById('lockGate').style.display = 'block';
-    document.getElementById('adminContent').style.display = 'none';
-    document.getElementById('passcodeInput').value = '';
-    document.getElementById('passcodeErr').classList.remove('show');
-    setTimeout(()=>document.getElementById('passcodeInput').focus(), 50);
-  }
+  document.getElementById('adminContent').style.display = 'block';
+  loadAdminData();
 }
-
-async function attemptUnlock(){
-  const input = document.getElementById('passcodeInput');
-  const err = document.getElementById('passcodeErr');
-  const submitBtn = document.getElementById('passcodeSubmit');
-
-  // Defense in depth: the "adminToggle" handler already refuses to open the
-  // panel while locked out, but re-check here too in case the panel was
-  // already open when the lockout kicked in, or Enter was pressed.
-  if(updateAdminLockUI()){
-    const state = getLockState();
-    err.textContent = `Too many incorrect attempts. Please wait ${formatDuration(state.lockoutUntil - Date.now())} before trying again.`;
-    err.classList.add('show');
-    return;
-  }
-
-  submitBtn.disabled = true;
-  const hash = await sha256(input.value);
-  const state = getLockState();
-
-  if(hash === REGISTRAR_PASSCODE_HASH){
-    adminUnlocked = true;
-    // A correct passcode clears the failed-attempt count and the
-    // escalation level entirely — the escalation only tracks strings of
-    // wrong guesses, not the history of the whole session.
-    saveLockState({ failedAttempts:0, lockoutUntil:0, level:0 });
-    updateAdminLockUI();
-    err.classList.remove('show');
-    document.getElementById('lockGate').style.display = 'none';
-    document.getElementById('adminContent').style.display = 'block';
-    loadAdminData();
-  } else {
-    const failedAttempts = state.failedAttempts + 1;
-    input.value = '';
-    input.focus();
-
-    if(failedAttempts >= 5){
-      // Every completed run of 5 wrong attempts escalates the lockout:
-      // level 1 → 5 min, level 2 → 25 min, level 3 → 125 min, and so on
-      // (5^level minutes), until a correct passcode resets it to level 0.
-      const level = state.level + 1;
-      const lockoutMinutes = Math.pow(5, level);
-      const lockoutUntil = Date.now() + lockoutMinutes * 60000;
-      saveLockState({ failedAttempts:0, lockoutUntil, level });
-      err.textContent = `Too many incorrect attempts. Registrar View is locked for ${lockoutMinutes} minute${lockoutMinutes===1?'':'s'}.`;
-      err.classList.add('show');
-      updateAdminLockUI();
-      // The passcode bar must not stay open once locked out.
-      document.getElementById('adminPanel').classList.remove('active');
-    } else {
-      saveLockState({ failedAttempts, lockoutUntil: 0, level: state.level });
-      err.textContent = 'Incorrect passcode. Please try again.';
-      err.classList.add('show');
-    }
-  }
-  submitBtn.disabled = false;
-}
-
-document.getElementById('passcodeSubmit').addEventListener('click', attemptUnlock);
-document.getElementById('passcodeInput').addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter'){ e.preventDefault(); attemptUnlock(); }
-});
 
 // ─── REGISTRAR CONSOLE (top-level nav tab) — passcode protected ─────────
-// Same SHA-256-hash + escalating-lockout pattern as the Quiz Registrar
-// View above, but fully independent: its own passcode, its own lockout
-// state in localStorage, and its own in-session unlocked flag, so
-// unlocking one does not unlock the other.
-const REGISTRAR_CONSOLE_PASSCODE_HASH = 'e618895b922baad1a008a04cd5359b11178ba2193802c388f2b4472c1c79ace4';
+// The passcode is verified server-side (see handleVerifyRegistrarConsolePasscode
+// in registration_backend.gs): the real passcode lives only in that Apps
+// Script project's Script Properties, never in this file, so nobody who
+// views the page source can read it or a hash of it. The client just sends
+// what the visitor typed to the backend and learns whether it matched.
+// Escalating lockout state is still tracked here in localStorage for UX
+// (to slow down casual guessing in the browser), independent of the actual
+// passcode check.
 const REGISTRAR_CONSOLE_LOCK_KEY = 'registrarConsoleLockState';
 let registrarConsoleUnlocked = false;
 let registrarConsoleLockoutTimer = null;
@@ -4815,10 +4657,19 @@ async function attemptRegistrarConsoleUnlock(){
   }
 
   submitBtn.disabled = true;
-  const hash = await sha256(input.value);
   const state = getRegistrarConsoleLockState();
+  let matched = false;
+  try{
+    // The passcode itself never travels anywhere except in this one request
+    // to your own Apps Script backend (over HTTPS), which is the only place
+    // that knows the real value.
+    await callBackend('verifyRegistrarConsolePasscode', { passcode: input.value });
+    matched = true;
+  }catch(e){
+    matched = false;
+  }
 
-  if(hash === REGISTRAR_CONSOLE_PASSCODE_HASH){
+  if(matched){
     registrarConsoleUnlocked = true;
     saveRegistrarConsoleLockState({ failedAttempts:0, lockoutUntil:0, level:0 });
     updateRegistrarConsoleLockUI();
