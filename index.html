@@ -2679,7 +2679,7 @@ function renderRepo(){
 // ─── ANNOUNCEMENTS TICKER ───────────────────────────────────
 const ANNOUNCEMENTS = [
   { tag: 'Deadline', text: 'Registration for the Cornerstone Quiz Contest 2026 is now open.' },
-  { tag: 'Quiz Date', text: 'The contest holds on Sunday, 27 December 2026 at G.S.S. Heipang.' },
+  { tag: 'Quiz Date', text: 'The contest holds on Monday, 28 December 2026 at G.S.S. Heipang.' },
   { tag: 'Reminder', text: 'SS2 & SS3 students in Heipang, Plateau State are eligible to register.' },
   { tag: 'Info', text: 'Registration is completely free of charge.' }
 ];
@@ -3609,7 +3609,7 @@ function openQuizSection(section){
 const LEVEL_LABEL = {S2:'S S 2', S3:'S S 3', OTHER:'Other', AP:'Other'};
 const FIELD_LABEL = {ART:'Arts', COM:'Commercial', SCI:'Science'};
 // Contest logistics — update these once the date and venue are finalized.
-const CONTEST_DATE = '27th December, 2026';
+const CONTEST_DATE = '28th December, 2026';
 const CONTEST_VENUE = 'Government Secondary School Heipang';
 const CONTEST_TIME = '9:00 am';
 
@@ -4164,6 +4164,7 @@ function buildConfirmationPdf(record, opts){
   sectionHeadingCol(rightX, colW, "Winners' Award Ceremony", yR1);
   fieldCol(rightX, colW, 'Date:', '30th December, 2026', yR1);
   fieldCol(rightX, colW, 'Event Venue:', 'Heipang Town Hall Opp. Airport View Hotel', yR1);
+  fieldCol(rightX, colW, 'Time:', '10:00 am', yR1);
 
   y = Math.max(yL1.y, yR1.y) + 3.5;
 
@@ -4177,7 +4178,7 @@ function buildConfirmationPdf(record, opts){
 
   sectionHeadingCol(rightX, colW, 'Parent/Guardian Information', yR2);
   fieldCol(rightX, colW, 'Full Name of Parent/Guardian:', record.guardianName, yR2);
-  fieldCol(rightX, colW, 'Phone Number (Active):', record.guardianPhone, yR2);
+  fieldCol(rightX, colW, 'Phone Number:', record.guardianPhone, yR2);
   fieldCol(rightX, colW, 'Residential Address:', record.address, yR2);
 
   y = Math.max(yL2.y, yR2.y) + 4.6;
