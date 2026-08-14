@@ -1298,6 +1298,25 @@
       </div>
     </div>
     <button class="nav-tab" data-page="page-quiz" onclick="showPage('page-quiz')">Quiz Contest Registration</button>
+    <div class="nav-dropdown" id="institutionalNavDropdown">
+      <button class="nav-dropdown-trigger" data-page="page-institutional" id="institutionalNavTrigger" onclick="toggleInstitutionalDropdown(event)">
+        Institutional Infrastructure <span class="caret"></span>
+      </button>
+      <div class="nav-dropdown-menu" id="institutionalNavMenu">
+        <button class="nav-dropdown-item" onclick="goInstitutional('page-institutional-about')">
+          <div class="dd-num">1</div>
+          <div><div class="dd-title">About, Mission, &amp; Impact Dashboard</div><div class="dd-sub">Who we are, what we stand for, and our impact so far.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goInstitutional('page-institutional-support')">
+          <div class="dd-num">2</div>
+          <div><div class="dd-title">Omni-Channel Contact &amp; Support Ticketing</div><div class="dd-sub">Reach us across multiple channels and track support requests.</div></div>
+        </button>
+        <button class="nav-dropdown-item" onclick="goInstitutional('page-institutional-privacy')">
+          <div class="dd-num">3</div>
+          <div><div class="dd-title">Student &amp; Guardian Privacy Control Center</div><div class="dd-sub">Understand and manage how student and guardian data is handled.</div></div>
+        </button>
+      </div>
+    </div>
     <button class="nav-tab" data-page="page-registrar-console" onclick="showPage('page-registrar-console')">Registrar Console</button>
   </div>
 </nav>
@@ -1376,17 +1395,17 @@
     <div class="ss-quicklinks">
       <button class="ss-quicklink-card" onclick="showPage('page-institutional-about')">
         <div class="ql-icon">🏫</div>
-        <h3>4.1 About, Mission, &amp; Impact Dashboard</h3>
+        <h3>5.1 About, Mission, &amp; Impact Dashboard</h3>
         <p>Who we are, what we stand for, and the impact of our work so far.</p>
       </button>
       <button class="ss-quicklink-card" onclick="showPage('page-institutional-support')">
         <div class="ql-icon">💬</div>
-        <h3>4.2 Omni-Channel Contact &amp; Support Ticketing</h3>
+        <h3>5.2 Omni-Channel Contact &amp; Support Ticketing</h3>
         <p>Reach us across multiple channels and track your support requests.</p>
       </button>
       <button class="ss-quicklink-card" onclick="showPage('page-institutional-privacy')">
         <div class="ql-icon">🔒</div>
-        <h3>4.3 Student &amp; Guardian Privacy Control Center</h3>
+        <h3>5.3 Student &amp; Guardian Privacy Control Center</h3>
         <p>Understand and manage how student and guardian data is handled.</p>
       </button>
     </div>
@@ -1398,7 +1417,7 @@
 ═══════════════════════════════════════════════════════════ -->
 <section id="page-institutional-about" class="page">
   <div class="ss-hero">
-    <div class="eyebrow">4.1 &middot; Institutional Infrastructure</div>
+    <div class="eyebrow">5.1 &middot; Institutional Infrastructure</div>
     <h1>About, Mission, &amp; Impact Dashboard</h1>
     <p>Our story, our mission, and the difference we're making — full details coming soon.</p>
   </div>
@@ -1414,7 +1433,7 @@
 
 <section id="page-institutional-support" class="page">
   <div class="ss-hero">
-    <div class="eyebrow">4.2 &middot; Institutional Infrastructure</div>
+    <div class="eyebrow">5.2 &middot; Institutional Infrastructure</div>
     <h1>Omni-Channel Contact &amp; Support Ticketing</h1>
     <p>Get in touch and track your support requests — full details coming soon.</p>
   </div>
@@ -1430,7 +1449,7 @@
 
 <section id="page-institutional-privacy" class="page">
   <div class="ss-hero">
-    <div class="eyebrow">4.3 &middot; Institutional Infrastructure</div>
+    <div class="eyebrow">5.3 &middot; Institutional Infrastructure</div>
     <h1>Student &amp; Guardian Privacy Control Center</h1>
     <p>How we handle student and guardian data — full details coming soon.</p>
   </div>
@@ -2207,6 +2226,7 @@ if(document.readyState !== 'loading'){ setSiteLogos(); }
 // ─── PAGE SWITCHER ──────────────────────────────────────────
 var SENIOR_PAGES = ['page-senior','page-senior-tri','page-senior-stem','page-senior-repo'];
 var JUNIOR_PAGES = ['page-junior','page-junior-jss1','page-junior-jss2','page-junior-jss3'];
+var INSTITUTIONAL_PAGES = ['page-institutional','page-institutional-about','page-institutional-support','page-institutional-privacy'];
 function showPage(pageId){
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   var target = document.getElementById(pageId);
@@ -2220,6 +2240,9 @@ function showPage(pageId){
   var juniorTrigger = document.getElementById('juniorNavTrigger');
   if(juniorTrigger) juniorTrigger.classList.toggle('active', JUNIOR_PAGES.indexOf(pageId) !== -1);
   closeJuniorDropdown();
+  var institutionalTrigger = document.getElementById('institutionalNavTrigger');
+  if(institutionalTrigger) institutionalTrigger.classList.toggle('active', INSTITUTIONAL_PAGES.indexOf(pageId) !== -1);
+  closeInstitutionalDropdown();
   // The nav floats transparently over the full-bleed hero photo only on
   // the Home page; every other page gets the solid navy bar so its
   // white text stays legible over plain content.
@@ -2296,6 +2319,32 @@ document.addEventListener('click', function(e){
   var dd = document.getElementById('juniorNavDropdown');
   if(dd && dd.classList.contains('open') && !dd.contains(e.target)){
     closeJuniorDropdown();
+  }
+});
+
+// ─── INSTITUTIONAL INFRASTRUCTURE: NAV DROPDOWN ─────────────
+function toggleInstitutionalDropdown(evt){
+  if(evt) evt.stopPropagation();
+  var dd = document.getElementById('institutionalNavDropdown');
+  var isOpen = dd.classList.contains('open');
+  if(isOpen){
+    closeInstitutionalDropdown();
+  } else {
+    dd.classList.add('open');
+  }
+}
+function closeInstitutionalDropdown(){
+  var dd = document.getElementById('institutionalNavDropdown');
+  if(dd) dd.classList.remove('open');
+}
+function goInstitutional(pageId){
+  closeInstitutionalDropdown();
+  showPage(pageId);
+}
+document.addEventListener('click', function(e){
+  var dd = document.getElementById('institutionalNavDropdown');
+  if(dd && dd.classList.contains('open') && !dd.contains(e.target)){
+    closeInstitutionalDropdown();
   }
 });
 
