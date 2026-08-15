@@ -5232,6 +5232,62 @@ async function handleBulkCertificateDownload(){
   }
 }
 
+// ── Certificate decoration helpers ─────────────────────────────
+// Small, dependency-free vector "ornaments" (diamonds, arcs, stars,
+// laurel-style leaves) drawn with plain jsPDF primitives — no rotation
+// matrices or extra assets required, so they render reliably across
+// jsPDF versions. Colours are passed in as [r,g,b] arrays.
+function drawCertDiamond(doc, cx, cy, r, fill, stroke, lw){
+  doc.setFillColor(fill[0], fill[1], fill[2]);
+  doc.setDrawColor(stroke[0], stroke[1], stroke[2]);
+  doc.setLineWidth(lw);
+  doc.lines([[r,r],[-r,r],[-r,-r],[r,-r]], cx, cy - r, [1,1], 'FD', true);
+}
+
+function drawCertArc(doc, cx, cy, r, startDeg, endDeg, color, lw){
+  doc.setDrawColor(color[0], color[1], color[2]);
+  doc.setLineWidth(lw);
+  const steps = 12;
+  const startRad = startDeg * Math.PI / 180, endRad = endDeg * Math.PI / 180;
+  let prevX = cx + r * Math.cos(startRad), prevY = cy + r * Math.sin(startRad);
+  for(let i = 1; i <= steps; i++){
+    const t = startRad + (endRad - startRad) * (i / steps);
+    const x = cx + r * Math.cos(t), y = cy + r * Math.sin(t);
+    doc.line(prevX, prevY, x, y);
+    prevX = x; prevY = y;
+  }
+}
+
+function drawCertStar(doc, cx, cy, rOuter, rInner, color){
+  doc.setFillColor(color[0], color[1], color[2]);
+  const pts = [];
+  for(let i = 0; i < 10; i++){
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const angle = -Math.PI / 2 + i * Math.PI / 5;
+    pts.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+  }
+  const deltas = [];
+  for(let i = 1; i < pts.length; i++) deltas.push([pts[i][0]-pts[i-1][0], pts[i][1]-pts[i-1][1]]);
+  doc.lines(deltas, pts[0][0], pts[0][1], [1,1], 'F', true);
+}
+
+// A single laurel-style leaf: a "kite" shape built from two triangles,
+// pointed at `angleDeg` (0 = pointing right, 90 = pointing down) and
+// rooted near (cx,cy). No rotation matrix needed — just trigonometry.
+function drawCertLeaf(doc, cx, cy, angleDeg, length, width, color){
+  const rad = angleDeg * Math.PI / 180;
+  const dx = Math.cos(rad), dy = Math.sin(rad);
+  const px = -dy, py = dx;
+  const tipX = cx + dx * length, tipY = cy + dy * length;
+  const baseX = cx - dx * length * 0.15, baseY = cy - dy * length * 0.15;
+  const midX = cx + dx * length * 0.55, midY = cy + dy * length * 0.55;
+  const leftX = midX + px * width, leftY = midY + py * width;
+  const rightX = midX - px * width, rightY = midY - py * width;
+  doc.setFillColor(color[0], color[1], color[2]);
+  doc.triangle(baseX, baseY, leftX, leftY, tipX, tipY, 'F');
+  doc.triangle(baseX, baseY, tipX, tipY, rightX, rightY, 'F');
+}
+
 // Certificate of Participation — landscape A4, one per Accepted candidate.
 // Layout: decorative border > logo + titles > candidate name/school in the
 // body > QR code acting as a bottom-center "seal" > Registrar's signature
@@ -5276,7 +5332,39 @@ function drawCertificatePage(doc, record){
   doc.rect(11.5, 11.5, W - 23, H - 23, 'S');
   doc.setDrawColor(0,0,0);
 
+  // ── ORNAMENTAL CORNERS — gold sweeps with a small gem at each tip ──
+  const cIn = 11.5, cArcR = 8;
+  drawCertArc(doc, cIn, cIn, cArcR, 180, 270, [212,160,23], 0.5);
+  drawCertArc(doc, W - cIn, cIn, cArcR, 270, 360, [212,160,23], 0.5);
+  drawCertArc(doc, W - cIn, H - cIn, cArcR, 0, 90, [212,160,23], 0.5);
+  drawCertArc(doc, cIn, H - cIn, cArcR, 90, 180, [212,160,23], 0.5);
+  [[8,8],[W-8,8],[W-8,H-8],[8,H-8]].forEach(([cx,cy])=>{
+    drawCertDiamond(doc, cx, cy, 2, [212,160,23], [26,51,112], 0.3);
+  });
+  doc.setDrawColor(0,0,0);
+
   // ── HEADER: logo + titles ───────────────────────────────────
+  // Soft gold sunburst behind the logo (drawn first, logo painted on top) —
+  // gold only, so nothing navy sits directly against the navy-heavy logo.
+  // The downward wedge is skipped so the rays never run into the title text.
+  try{
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({opacity:0.5}));
+    const sunCx = W/2, sunCy = 28, rIn = 9, rOut = 16;
+    for(let i=0;i<28;i++){
+      const angle = (i/28)*360;
+      if(angle > 35 && angle < 145) continue; // keep clear of the title below
+      const rad = angle*Math.PI/180;
+      const long = i % 2 === 0;
+      const rO = long ? rOut : rOut - 2.5;
+      doc.setDrawColor(212,160,23);
+      doc.setLineWidth(long ? 0.5 : 0.3);
+      doc.line(sunCx + rIn*Math.cos(rad), sunCy + rIn*Math.sin(rad), sunCx + rO*Math.cos(rad), sunCy + rO*Math.sin(rad));
+    }
+    doc.restoreGraphicsState();
+  }catch(e){ console.error('Could not draw certificate sunburst', e); }
+  doc.setDrawColor(0,0,0);
+
   try{
     doc.addImage(LOGO_DATA_URL, 'PNG', W/2 - 12, 16, 24, 24);
   }catch(e){ console.error('Could not add logo to certificate', e); }
@@ -5290,6 +5378,15 @@ function drawCertificatePage(doc, record){
   doc.setTextColor(60, 60, 60);
   doc.text('A Pin Niri John Initiative  •  Heipang, Plateau State', W/2, 53, {align:'center'});
 
+  // Faint gold plaque behind the title, for a touch of dimension
+  try{
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({opacity:0.10}));
+    doc.setFillColor(212,160,23);
+    doc.roundedRect(W/2 - 90, 60, 180, 16.5, 8, 8, 'F');
+    doc.restoreGraphicsState();
+  }catch(e){ console.error('Could not draw certificate title backdrop', e); }
+
   doc.setFont('times', 'bolditalic');
   doc.setFontSize(30);
   doc.setTextColor(212, 160, 23);
@@ -5298,6 +5395,7 @@ function drawCertificatePage(doc, record){
   doc.setDrawColor(212, 160, 23);
   doc.setLineWidth(0.6);
   doc.line(W/2 - 55, 74, W/2 + 55, 74);
+  drawCertDiamond(doc, W/2, 74, 1.6, [212,160,23], [26,51,112], 0.3);
   doc.setDrawColor(0,0,0);
 
   // ── BODY ─────────────────────────────────────────────────────
@@ -5315,6 +5413,15 @@ function drawCertificatePage(doc, record){
   doc.setLineWidth(0.3);
   doc.line(W/2 - 70, 107.5, W/2 + 70, 107.5);
   doc.setDrawColor(0,0,0);
+
+  // Small laurel sprigs flanking the name — an "achievement" accent, gold
+  // with a touch of the darker gold for depth
+  [-1, 1].forEach(side=>{
+    const bx = W/2 + side * 70, by = 107.5;
+    drawCertLeaf(doc, bx, by, side > 0 ? -22 : 202, 6.5, 1.6, [212,160,23]);
+    drawCertLeaf(doc, bx, by, side > 0 ? 22 : 158, 5.5, 1.4, [184,134,11]);
+    drawCertLeaf(doc, bx, by, side > 0 ? 0 : 180, 7.5, 1.8, [212,160,23]);
+  });
 
   doc.setFont('times', 'normal');
   doc.setFontSize(12.5);
@@ -5367,19 +5474,39 @@ function drawCertificatePage(doc, record){
   doc.text('Cornerstone Quiz Contest', sigCenterX, sigLineY + 11, {align:'center'});
   doc.setTextColor(0,0,0);
 
-  // ── QR CODE — bottom-right, styled as an authentication seal ──
+  // ── QR CODE — bottom-right, styled as a verification "medal" ──
   const sealSize = 26;
   const sealX = W - 20 - sealSize;
-  const sealY = H - 44;
+  const sealY = H - 47;
+  const sealCx = sealX + sealSize/2;
+
+  // Ribbon tails hang below the medal (drawn first, medal frame sits on top
+  // of their upper edge) — a small "winner" flourish for the QR seal.
+  doc.setFillColor(212,160,23);
+  doc.triangle(sealCx-7, sealY+sealSize-2, sealCx-1, sealY+sealSize-2, sealCx-4, sealY+sealSize+9, 'F');
+  doc.triangle(sealCx+1, sealY+sealSize-2, sealCx+7, sealY+sealSize-2, sealCx+4, sealY+sealSize+9, 'F');
+  doc.setFillColor(255,255,255);
+  doc.triangle(sealCx-4, sealY+sealSize+6, sealCx-2.2, sealY+sealSize+6, sealCx-3.1, sealY+sealSize+9, 'F');
+  doc.triangle(sealCx+2.2, sealY+sealSize+6, sealCx+4, sealY+sealSize+6, sealCx+3.1, sealY+sealSize+9, 'F');
+
   if(qrDataUrl){
+    doc.setDrawColor(212,160,23);
+    doc.setLineWidth(1.1);
+    doc.roundedRect(sealX-1.6, sealY-1.6, sealSize+3.2, sealSize+3.2, 2.5, 2.5, 'S');
+    doc.setLineWidth(0.4);
+    doc.roundedRect(sealX-3, sealY-3, sealSize+6, sealSize+6, 3, 3, 'S');
+
     doc.setFillColor(255,255,255);
     doc.roundedRect(sealX, sealY, sealSize, sealSize, 1.5, 1.5, 'F');
     doc.addImage(qrDataUrl, 'PNG', sealX, sealY, sealSize, sealSize);
+
+    drawCertStar(doc, sealCx, sealY-5.5, 2.6, 1.1, [212,160,23]);
   }
+  doc.setDrawColor(0,0,0);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
-  doc.text('SCAN TO VERIFY', sealX + sealSize/2, sealY + sealSize + 8, {align:'center'});
+  doc.text('SCAN TO VERIFY', sealCx, sealY + sealSize + 12, {align:'center'});
   doc.setTextColor(0,0,0);
 }
 
