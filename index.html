@@ -2271,6 +2271,7 @@
     <div class="modal-actions">
       <button class="btn-accept" id="reviewAcceptBtn">Accept</button>
       <button class="btn-ghost" id="reviewDownloadSlipBtn">Download Slip</button>
+      <button class="btn-answer" id="reviewDownloadFrontCoverBtn" disabled title="Available once this candidate is Accepted">Download Front Cover</button>
       <button class="btn-answer" id="reviewDownloadAnswerSlipBtn" disabled title="Available once this candidate is Accepted">Download Answer Slip</button>
       <button class="btn-delete" id="reviewDeleteBtn">Delete</button>
     </div>
@@ -4814,6 +4815,219 @@ function buildAnswerSheetPdf(record){
   doc.save(`${record.applicationId.replace(/\//g, '-')}-AnswerSheet.pdf`);
 }
 
+// ── QUESTION BOOKLET FRONT COVER ─────────────────────────────────
+// Standing instructions printed on every candidate's front cover, in the
+// order they should be read. Kept as a single array so both the single-
+// candidate cover and the bulk-cover run stay in sync automatically.
+const FRONT_COVER_INSTRUCTIONS = [
+  'Do not open this booklet until you are instructed to do so by the invigilator.',
+  'Confirm that your Application ID, Name, School and Category printed above are correct before you begin. Report any error to the invigilator immediately.',
+  'This booklet contains Multiple Choice questions only. Each question carries five options, lettered A to E.',
+  'You have Three (3) Hours to attempt all questions in your Category.',
+  'All answers must be recorded on the separate Official Answer Sheet provided. Do NOT write, shade, or mark any answer inside this booklet.',
+  'On the Answer Sheet, shade or circle only ONE option per question. Any question with more than one option shaded will be marked wrong.',
+  'Read every question carefully before answering. Where a question is unclear, attempt it to the best of your understanding — invigilators cannot explain or interpret questions.',
+  'Rough work, where necessary, may be done in the margins of this booklet only, never on the Answer Sheet.',
+  'Calculators, phones, smart devices, textbooks, and any unauthorised material are NOT permitted in the examination hall.',
+  'Do not communicate with, or attempt to view the work of, another candidate. Any form of examination malpractice will lead to outright disqualification.',
+  'Raise your hand if you need assistance, more writing material, or wish to report an irregularity. Do not leave your seat unannounced.',
+  'At the end of the Three (3) Hours, stop writing immediately and remain seated until both this booklet and your Answer Sheet have been collected by the invigilator.'
+];
+
+// Draws one candidate's Question Booklet Front Cover onto the CURRENT page
+// of an already-created jsPDF document. Mirrors drawAnswerSheetPage: used
+// both for the single-candidate download (one-page doc) and the bulk
+// download (one page per candidate in a single multi-page doc). Does not
+// create the document or save it. `record` needs: applicationId, surname,
+// firstName, lastName, school, fieldCode, fieldLabel.
+function drawFrontCoverPage(doc, record){
+  const fullName = [record.surname, record.firstName, record.lastName].filter(Boolean).join(' ');
+  const subjects = ANSWER_SHEET_SUBJECTS[record.fieldCode];
+  if (!subjects) {
+    throw new Error('No subject list is configured for this field of study (' + (record.fieldLabel || record.fieldCode) + ').');
+  }
+  const categoryLabel = `${(record.fieldLabel || FIELD_LABEL[record.fieldCode] || record.fieldCode || '').toUpperCase()} CATEGORY`;
+
+  const qrPayload = [
+    'Cornerstone Quiz Contest — Question Booklet',
+    `Name: ${fullName}`,
+    `Application ID: ${record.applicationId}`,
+    `Field of Study: ${record.fieldLabel || ''}`,
+    `School: ${record.school || ''}`
+  ].join('\n');
+  const addQrCode = (x, y, size) => {
+    if (typeof qrcode !== 'function') throw new Error('QR code generator is unavailable.');
+    const qr = qrcode(0, 'M');
+    qr.addData(qrPayload);
+    qr.make();
+    doc.addImage(qr.createDataURL(4, 0), 'PNG', x, y, size, size);
+  };
+
+  // Faint full-page watermark, matching the rest of the document set.
+  try {
+    doc.saveGraphicsState();
+    doc.setGState(new doc.GState({ opacity: 0.22 }));
+    doc.addImage(BG_DATA_URL, 'JPEG', 0, 0, 210, 297);
+    doc.restoreGraphicsState();
+  } catch (e) { console.error('Could not add background to PDF', e); }
+
+  // ── HEADER ───────────────────────────────────────────────────
+  drawLogoSunburst(doc, 19, 15, 8, 13);
+  try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 22, 22); }
+  catch (e) { console.error('Could not add logo to PDF', e); }
+
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(176, 3, 26, 26, 2, 2, 'F');
+  addQrCode(177, 4, 24);
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(14);
+  doc.text('CORNERSTONE QUIZ CONTEST', 105, 12, { align: 'center' });
+  doc.setFont('times', 'bold');
+  doc.setFontSize(11);
+  doc.text('QUESTION BOOKLET — FRONT COVER', 105, 19, { align: 'center' });
+  doc.setFont('times', 'italic');
+  doc.setFontSize(8);
+  doc.text(`${CONTEST_DATE}   •   ${CONTEST_VENUE}   •   ${CONTEST_TIME}`, 105, 25, { align: 'center' });
+
+  // Navy-gold separator, echoing the on-screen header gradient.
+  const sepY = 30, sepH = 1.3, sepSplit = 0.72;
+  doc.setFillColor(15, 33, 71);
+  doc.rect(0, sepY, 210 * sepSplit, sepH, 'F');
+  doc.setFillColor(212, 160, 23);
+  doc.rect(210 * sepSplit, sepY, 210 * (1 - sepSplit), sepH, 'F');
+
+  // ── CANDIDATE INFO BAND ─────────────────────────────────────
+  let y = 37;
+  doc.setFillColor(235, 240, 255);
+  doc.roundedRect(18, y, 174, 18, 2, 2, 'F');
+  doc.setDrawColor(26, 51, 112);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(18, y, 174, 18, 2, 2, 'S');
+
+  const infoLine = (label, value, lx, ly) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(26, 51, 112);
+    doc.text(label, lx, ly);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(String(value || ''), lx + 26, ly);
+  };
+  infoLine('Application ID:', record.applicationId, 22, y + 6);
+  infoLine('Field of Study:', record.fieldLabel || record.fieldCode, 110, y + 6);
+  infoLine('Name:', fullName, 22, y + 13);
+  infoLine('School:', record.school, 110, y + 13);
+  doc.setDrawColor(0, 0, 0);
+  y += 18 + 7;
+
+  // ── CATEGORY BANNER ──────────────────────────────────────────
+  doc.setFillColor(15, 33, 71);
+  doc.roundedRect(18, y, 174, 11, 2, 2, 'F');
+  doc.setFont('times', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(212, 160, 23);
+  doc.text(categoryLabel, 105, y + 7.5, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  y += 11 + 6;
+
+  // ── SUBJECTS ──────────────────────────────────────────────────
+  doc.setFillColor(235, 240, 255);
+  doc.roundedRect(18, y, 174, 7, 1.5, 1.5, 'F');
+  doc.setDrawColor(26, 51, 112);
+  doc.setLineWidth(0.35);
+  doc.roundedRect(18, y, 174, 7, 1.5, 1.5, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(26, 51, 112);
+  doc.text('SUBJECTS COVERED IN THIS BOOKLET', 22, y + 4.8);
+  doc.setTextColor(0, 0, 0);
+  doc.setDrawColor(0, 0, 0);
+  y += 7 + 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  subjects.forEach((subject, i) => {
+    doc.text(`${i + 1}. ${subject.name}`, 24, y);
+    y += 8;
+  });
+  y += 4;
+
+  // ── INSTRUCTIONS TO CANDIDATE ───────────────────────────────
+  doc.setFillColor(235, 240, 255);
+  doc.roundedRect(18, y, 174, 7, 1.5, 1.5, 'F');
+  doc.setDrawColor(26, 51, 112);
+  doc.setLineWidth(0.35);
+  doc.roundedRect(18, y, 174, 7, 1.5, 1.5, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(26, 51, 112);
+  doc.text('INSTRUCTIONS TO CANDIDATE', 22, y + 4.8);
+  doc.setTextColor(0, 0, 0);
+  doc.setDrawColor(0, 0, 0);
+  y += 7 + 5;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.3);
+  const textWidth = 168;
+  FRONT_COVER_INSTRUCTIONS.forEach((instruction, i) => {
+    const numLabel = `${i + 1}.`;
+    const lines = doc.splitTextToSize(instruction, textWidth - 6);
+    doc.text(numLabel, 20, y);
+    doc.text(lines, 26, y);
+    y += lines.length * 4 + 1.8;
+  });
+
+  // ── FOOTER ───────────────────────────────────────────────────
+  const footerY = Math.max(y + 8, 278);
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const sigLabel = 'Candidate Signature:';
+  doc.text(sigLabel, 18, footerY);
+  const sigLabelWidth = doc.getTextWidth(sigLabel);
+  doc.line(18 + sigLabelWidth + 3, footerY, 95, footerY);
+
+  const invigLabel = 'Invigilator Signature:';
+  const invigLabelWidth = doc.getTextWidth(invigLabel);
+  doc.text(invigLabel, 118, footerY);
+  doc.line(118 + invigLabelWidth + 3, footerY, 192, footerY);
+
+  // Initiative credit — navy on light-blue shading, matching the subject
+  // heading bands above.
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  const creditLabel = 'Pin Niri John Initiative';
+  const creditWidth = doc.getTextWidth(creditLabel);
+  const creditPadX = 4, creditH = 5.5;
+  const creditBoxW = creditWidth + creditPadX * 2;
+  const creditBoxX = 105 - creditBoxW / 2;
+  const creditBoxY = footerY + 7 - creditH + 1.3;
+  doc.setFillColor(235, 240, 255);
+  doc.roundedRect(creditBoxX, creditBoxY, creditBoxW, creditH, 1.5, 1.5, 'F');
+  doc.setDrawColor(26, 51, 112);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(creditBoxX, creditBoxY, creditBoxW, creditH, 1.5, 1.5, 'S');
+  doc.setTextColor(26, 51, 112);
+  doc.text(creditLabel, 105, footerY + 7, { align: 'center' });
+  doc.setDrawColor(0, 0, 0);
+  doc.setTextColor(0, 0, 0);
+}
+
+// Single-candidate download: creates a fresh one-page A4 document, draws
+// the Question Booklet Front Cover onto it, and saves it to the browser.
+function buildFrontCoverPdf(record){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF(); // A4 portrait, 210 x 297 mm
+  drawFrontCoverPage(doc, record);
+  doc.save(`${record.applicationId.replace(/\//g, '-')}-FrontCover.pdf`);
+}
+
 // Mailto notify
 document.getElementById('mailBtn').addEventListener('click', ()=>{
   if(isDuplicateFlow){
@@ -4893,6 +5107,8 @@ function invalidateBulkAnswerSlip(){
   bulkAnswerSlipReady = false;
   const btn = document.getElementById('bulkAnswerSlipBtn');
   if(btn) btn.disabled = true;
+  const coverBtn = document.getElementById('bulkFrontCoverBtn');
+  if(coverBtn) coverBtn.disabled = true;
 }
 document.getElementById('formCard').addEventListener('input', invalidateBulkAnswerSlip);
 document.getElementById('formCard').addEventListener('change', invalidateBulkAnswerSlip);
@@ -5385,6 +5601,7 @@ async function loadAdminData(isManualRefresh){
       '<button class="btn-ghost" id="refreshAdminBtn">Refresh List</button>' +
       '<button class="btn-csv" id="exportAcceptedCsvBtn">Export Accepted (CSV)</button>' +
       '<button class="btn-ghost" id="exportAllCsvBtn">Export All (CSV)</button>' +
+      `<button class="btn-answer" id="bulkFrontCoverBtn" ${bulkAnswerSlipReady ? '' : 'disabled'}>Download Bulk Covers</button>` +
       `<button class="btn-answer" id="bulkAnswerSlipBtn" ${bulkAnswerSlipReady ? '' : 'disabled'}>Download Bulk Answer Slip</button>` +
       `<button class="btn-answer" id="bulkCertificateBtn" ${bulkAnswerSlipReady ? '' : 'disabled'}>Download Bulk Certificates</button>` +
       '</div>';
@@ -5419,6 +5636,7 @@ async function loadAdminData(isManualRefresh){
       if(wrap) wrap.style.display = dashboardVisible ? '' : 'none';
       document.getElementById('dashToggleBtn').textContent = dashboardVisible ? 'Hide Summary' : 'Show Summary';
     });
+    document.getElementById('bulkFrontCoverBtn').addEventListener('click', handleBulkFrontCoverDownload);
     document.getElementById('bulkAnswerSlipBtn').addEventListener('click', handleBulkAnswerSheetDownload);
     document.getElementById('bulkCertificateBtn').addEventListener('click', handleBulkCertificateDownload);
     container.querySelectorAll('button[data-action="review"]').forEach(btn=>{
@@ -5494,6 +5712,75 @@ async function handleBulkAnswerSheetDownload(){
 
   if(failed.length){
     alert(`Answer sheets could not be generated for ${failed.length} candidate(s): ${failed.join(', ')}. The rest were included in the PDF.`);
+  }
+
+  if(btn){
+    btn.textContent = originalText;
+    btn.disabled = false; // still armed — the snapshot used is unchanged
+  }
+}
+
+// Builds and downloads a SINGLE PDF containing the Question Booklet Front
+// Cover for every Accepted candidate captured in the most recent explicit
+// "Refresh List" snapshot (same eligibility rule as the bulk answer sheet:
+// Application ID's trailing serial must fall in 001–999). One page per
+// eligible candidate, in the same multi-page-doc pattern as
+// handleBulkAnswerSheetDownload.
+async function handleBulkFrontCoverDownload(){
+  if(!bulkAnswerSlipReady) return;
+
+  const eligible = bulkAnswerSlipRecords.filter(r=>{
+    if((r.status || 'pending') !== 'accepted') return false;
+    const m = String(r.applicationId || '').match(/\/(\d{3})$/);
+    if(!m) return false;
+    const serial = parseInt(m[1], 10);
+    return serial >= 1 && serial <= 999;
+  });
+
+  if(eligible.length === 0){
+    alert('No Accepted candidates with a valid Application ID (001–999) were found in the last refreshed list.');
+    return;
+  }
+
+  const btn = document.getElementById('bulkFrontCoverBtn');
+  const originalText = btn ? btn.textContent : '';
+  if(btn) btn.disabled = true;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF(); // first page, A4 portrait, 210 x 297 mm
+
+  let count = 0;
+  let pagesDrawn = 0;
+  const failed = [];
+  for(const r of eligible){
+    count++;
+    if(btn) btn.textContent = `Building ${count}/${eligible.length}…`;
+    if(pagesDrawn > 0) doc.addPage();
+    try{
+      drawFrontCoverPage(doc, {
+        applicationId: r.applicationId,
+        surname: r.surname, firstName: r.firstName, lastName: r.lastName,
+        school: r.school, fieldCode: r.fieldCode, fieldLabel: r.fieldOfStudy
+      });
+      pagesDrawn++;
+    }catch(e){
+      console.error('Could not generate front cover for', r.applicationId, e);
+      failed.push(r.applicationId);
+      // Remove the blank page we just added for this failed candidate so the
+      // page count keeps matching the number of successfully drawn covers.
+      if(doc.getNumberOfPages() > Math.max(pagesDrawn, 1)) doc.deletePage(doc.getNumberOfPages());
+    }
+    // Brief yield so the UI stays responsive while building larger batches.
+    await new Promise(res=>setTimeout(res, 30));
+  }
+
+  if(pagesDrawn > 0){
+    const today = new Date().toISOString().slice(0,10);
+    doc.save(`CQC-Bulk-FrontCovers-${today}.pdf`);
+  }
+
+  if(failed.length){
+    alert(`Front covers could not be generated for ${failed.length} candidate(s): ${failed.join(', ')}. The rest were included in the PDF.`);
   }
 
   if(btn){
@@ -5927,9 +6214,12 @@ function openReviewModal(record){
   acceptBtn.disabled = status === 'accepted';
   acceptBtn.textContent = status === 'accepted' ? 'Accepted' : 'Accept';
 
-  // Answer Slip is only ever safe to hand out once the candidate is Accepted.
+  // Answer Slip and Front Cover are only ever safe to hand out once the
+  // candidate is Accepted.
   const answerSlipBtn = document.getElementById('reviewDownloadAnswerSlipBtn');
   answerSlipBtn.disabled = status !== 'accepted';
+  const frontCoverBtn = document.getElementById('reviewDownloadFrontCoverBtn');
+  frontCoverBtn.disabled = status !== 'accepted';
 
   document.getElementById('reviewModalOverlay').classList.add('active');
 }
@@ -6058,6 +6348,29 @@ document.getElementById('reviewDownloadAnswerSlipBtn').addEventListener('click',
   }catch(e){
     console.error('Download Answer Slip failed', e);
     alert('Could not build the Answer Sheet PDF. Please try again.\n\n' + e.message);
+  }
+});
+
+// Download Front Cover — enabled only once the candidate's status is
+// "accepted". Purely local PDF generation (buildFrontCoverPdf), no backend
+// call, gated by the same status the Accept button uses.
+document.getElementById('reviewDownloadFrontCoverBtn').addEventListener('click', ()=>{
+  if(!reviewingRecord) return;
+  // Runtime safeguard: the button is disabled/hidden for non-accepted
+  // candidates, but guard here too in case it's ever triggered anyway.
+  if((reviewingRecord.status || 'pending') !== 'accepted'){
+    alert('The Front Cover can only be downloaded once this candidate has been Accepted.');
+    return;
+  }
+  try{
+    buildFrontCoverPdf({
+      applicationId: reviewingRecord.applicationId,
+      surname: reviewingRecord.surname, firstName: reviewingRecord.firstName, lastName: reviewingRecord.lastName,
+      school: reviewingRecord.school, fieldCode: reviewingRecord.fieldCode, fieldLabel: reviewingRecord.fieldOfStudy
+    });
+  }catch(e){
+    console.error('Download Front Cover failed', e);
+    alert('Could not build the Front Cover PDF. Please try again.\n\n' + e.message);
   }
 });
 
