@@ -4092,34 +4092,6 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 // PDF generation — shared by the candidate's download button and the Registrar's
 // per-row "Slip" button in the admin panel. Produces a three-page document:
 // Page 1 Confirmation Slip, Page 2 Letter of Attestation, Page 3 Parent/Guardian
-// Gold sunburst halo drawn behind a logo image — reusable across every PDF
-// that places LOGO_DATA_URL. Draw this immediately BEFORE the addImage()
-// call for the logo, using the same centre point, so the logo paints over
-// the middle of the sunburst and only the rays peeking out around it are
-// visible. Gold only — never navy — so nothing dark sits directly against
-// the logo's own navy artwork. `skipStartDeg`/`skipEndDeg` let a caller
-// blank out a wedge (e.g. the side facing nearby title text or a page edge)
-// so the rays never collide with other header content.
-function drawLogoSunburst(doc, cx, cy, rIn, rOut, skipStartDeg, skipEndDeg){
-  try{
-    doc.saveGraphicsState();
-    doc.setGState(new doc.GState({opacity:0.5}));
-    const rayCount = 28;
-    for(let i=0;i<rayCount;i++){
-      const angle = (i/rayCount)*360;
-      if(skipStartDeg != null && angle > skipStartDeg && angle < skipEndDeg) continue;
-      const rad = angle*Math.PI/180;
-      const long = i % 2 === 0;
-      const rO = long ? rOut : rOut - (rOut - rIn) * 0.35;
-      doc.setDrawColor(212,160,23);
-      doc.setLineWidth(long ? 0.5 : 0.3);
-      doc.line(cx + rIn*Math.cos(rad), cy + rIn*Math.sin(rad), cx + rO*Math.cos(rad), cy + rO*Math.sin(rad));
-    }
-    doc.restoreGraphicsState();
-  }catch(e){ console.error('Could not draw logo sunburst', e); }
-  doc.setDrawColor(0,0,0);
-}
-
 // Consent Form (single page, two-column layout). `record` is a normalized object:
 // { applicationId, surname, firstName, lastName, gender, dob, phone, email,
 //   guardianName, guardianPhone, address, school, levelLabel, fieldLabel, gradYear }
@@ -4156,8 +4128,7 @@ function buildConfirmationPdf(record, opts){
   doc.setFillColor(212, 160, 23);           // gold accent line only
   doc.rect(0, 32, 210, 1.2, 'F');
 
-  // Logo — top-left inside banner, with a gold sunburst halo behind it
-  drawLogoSunburst(doc, 20, 16, 8, 13);
+  // Logo — top-left inside banner
   try{
     doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 24, 24);
   }catch(e){ console.error('Could not add logo to PDF', e); }
@@ -4696,8 +4667,6 @@ function drawAnswerSheetPage(doc, record){
   } catch (e) { console.error('Could not add background to PDF', e); }
 
   // ── HEADER ───────────────────────────────────────────────────
-  // Logo — top-left, with a gold sunburst halo behind it
-  drawLogoSunburst(doc, 19, 15, 8, 13);
   try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 22, 22); }
   catch (e) { console.error('Could not add logo to PDF', e); }
 
@@ -4872,7 +4841,6 @@ function drawFrontCoverPage(doc, record){
   } catch (e) { console.error('Could not add background to PDF', e); }
 
   // ── HEADER ───────────────────────────────────────────────────
-  drawLogoSunburst(doc, 19, 15, 8, 13);
   try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 22, 22); }
   catch (e) { console.error('Could not add logo to PDF', e); }
 
@@ -5965,11 +5933,6 @@ function drawCertificatePage(doc, record){
   doc.setDrawColor(0,0,0);
 
   // ── HEADER: logo + titles ───────────────────────────────────
-  // Soft gold sunburst behind the logo (drawn first, logo painted on top) —
-  // gold only, so nothing navy sits directly against the navy-heavy logo.
-  // The downward wedge is skipped so the rays never run into the title below.
-  drawLogoSunburst(doc, W/2, 28, 9, 16, 35, 145);
-
   try{
     doc.addImage(LOGO_DATA_URL, 'PNG', W/2 - 12, 16, 24, 24);
   }catch(e){ console.error('Could not add logo to certificate', e); }
