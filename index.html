@@ -1052,7 +1052,7 @@
   }
   .nav-dropdown.open .nav-dropdown-trigger .caret{transform:rotate(-135deg);margin-top:3px;}
   .nav-dropdown-menu{
-    position:absolute;top:100%;left:0;margin-top:6px;min-width:280px;
+    position:fixed;min-width:280px;
     background:var(--paper);border-radius:var(--radius-md);box-shadow:var(--shadow-xl);
     border:1px solid var(--rule);overflow:hidden;
     opacity:0;visibility:hidden;transform:translateY(-8px);
@@ -2524,6 +2524,20 @@ function showPage(pageId){
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+// ─── NAV DROPDOWNS: position fixed-position menu against its trigger ───
+// .site-nav-inner uses overflow-x:auto for mobile scrolling, which clips
+// any absolutely-positioned child that overflows vertically. Positioning
+// the menu as position:fixed and calculating its coordinates in JS avoids
+// that clipping entirely.
+function positionNavDropdown(triggerId, menuId){
+  var trigger = document.getElementById(triggerId);
+  var menu = document.getElementById(menuId);
+  if(!trigger || !menu) return;
+  var rect = trigger.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.left = rect.left + 'px';
+}
+
 // ─── SENIOR SECONDARY: NAV DROPDOWN ─────────────────────────
 function toggleSeniorDropdown(evt){
   if(evt) evt.stopPropagation();
@@ -2532,6 +2546,7 @@ function toggleSeniorDropdown(evt){
   if(isOpen){
     closeSeniorDropdown();
   } else {
+    positionNavDropdown('seniorNavTrigger', 'seniorNavMenu');
     dd.classList.add('open');
   }
 }
@@ -2558,6 +2573,7 @@ function toggleJuniorDropdown(evt){
   if(isOpen){
     closeJuniorDropdown();
   } else {
+    positionNavDropdown('juniorNavTrigger', 'juniorNavMenu');
     dd.classList.add('open');
   }
 }
@@ -2574,6 +2590,17 @@ document.addEventListener('click', function(e){
   if(dd && dd.classList.contains('open') && !dd.contains(e.target)){
     closeJuniorDropdown();
   }
+});
+// Fixed-position menus don't move with the page the way absolutely
+// positioned ones inside a relative parent would, so close them on
+// scroll/resize rather than showing a stale position.
+window.addEventListener('scroll', function(){
+  closeSeniorDropdown();
+  closeJuniorDropdown();
+}, true);
+window.addEventListener('resize', function(){
+  closeSeniorDropdown();
+  closeJuniorDropdown();
 });
 
 // ─── JUNIOR SECONDARY: SUBJECT GRID + RESOURCE-TYPE FILTERS ──
