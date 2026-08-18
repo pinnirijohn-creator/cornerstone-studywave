@@ -5982,15 +5982,6 @@ function drawCertificatePage(doc, record){
   doc.line(W/2 - 70, 107.5, W/2 + 70, 107.5);
   doc.setDrawColor(0,0,0);
 
-  // Small laurel sprigs flanking the name — an "achievement" accent, gold
-  // with a touch of the darker gold for depth
-  [-1, 1].forEach(side=>{
-    const bx = W/2 + side * 70, by = 107.5;
-    drawCertLeaf(doc, bx, by, side > 0 ? -22 : 202, 6.5, 1.6, [212,160,23]);
-    drawCertLeaf(doc, bx, by, side > 0 ? 22 : 158, 5.5, 1.4, [184,134,11]);
-    drawCertLeaf(doc, bx, by, side > 0 ? 0 : 180, 7.5, 1.8, [212,160,23]);
-  });
-
   doc.setFont('times', 'normal');
   doc.setFontSize(12.5);
   doc.setTextColor(20, 20, 20);
@@ -6042,39 +6033,17 @@ function drawCertificatePage(doc, record){
   doc.text('Cornerstone Quiz Contest', sigCenterX, sigLineY + 11, {align:'center'});
   doc.setTextColor(0,0,0);
 
-  // ── QR CODE — bottom-right, styled as a verification "medal" ──
+  // ── QR CODE — bottom-right ──────────────────────────────────
   const sealSize = 26;
   const sealX = W - 20 - sealSize;
   const sealY = H - 47;
-  const sealCx = sealX + sealSize/2;
-
-  // Ribbon tails hang below the medal (drawn first, medal frame sits on top
-  // of their upper edge) — a small "winner" flourish for the QR seal.
-  doc.setFillColor(212,160,23);
-  doc.triangle(sealCx-7, sealY+sealSize-2, sealCx-1, sealY+sealSize-2, sealCx-4, sealY+sealSize+9, 'F');
-  doc.triangle(sealCx+1, sealY+sealSize-2, sealCx+7, sealY+sealSize-2, sealCx+4, sealY+sealSize+9, 'F');
-  doc.setFillColor(255,255,255);
-  doc.triangle(sealCx-4, sealY+sealSize+6, sealCx-2.2, sealY+sealSize+6, sealCx-3.1, sealY+sealSize+9, 'F');
-  doc.triangle(sealCx+2.2, sealY+sealSize+6, sealCx+4, sealY+sealSize+6, sealCx+3.1, sealY+sealSize+9, 'F');
 
   if(qrDataUrl){
-    doc.setDrawColor(212,160,23);
-    doc.setLineWidth(1.1);
-    doc.roundedRect(sealX-1.6, sealY-1.6, sealSize+3.2, sealSize+3.2, 2.5, 2.5, 'S');
-    doc.setLineWidth(0.4);
-    doc.roundedRect(sealX-3, sealY-3, sealSize+6, sealSize+6, 3, 3, 'S');
-
     doc.setFillColor(255,255,255);
     doc.roundedRect(sealX, sealY, sealSize, sealSize, 1.5, 1.5, 'F');
     doc.addImage(qrDataUrl, 'PNG', sealX, sealY, sealSize, sealSize);
-
-    drawCertStar(doc, sealCx, sealY-5.5, 2.6, 1.1, [212,160,23]);
   }
   doc.setDrawColor(0,0,0);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
-  doc.setTextColor(120, 120, 120);
-  doc.text('SCAN TO VERIFY', sealCx, sealY + sealSize + 12, {align:'center'});
   doc.setTextColor(0,0,0);
 }
 
