@@ -849,14 +849,33 @@
      landing header. */
   .hero{
     position:relative;overflow:hidden;
-    text-align:center;
+    text-align:left;
     width:100%;
-    padding:120px 24px 80px;
+    padding:120px 40px 80px;
     margin-bottom:36px;
     min-height:88vh;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:48px;
     background:linear-gradient(155deg,var(--navy) 0%,var(--navy-2) 55%,var(--navy-3) 100%);
     color:#fff;
+  }
+  .hero-content{
+    position:relative;z-index:2;flex:1 1 480px;max-width:560px;
+  }
+  .hero-poster{
+    position:relative;z-index:2;flex:1 1 360px;max-width:420px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hero-poster img{
+    width:100%;height:auto;display:block;border-radius:12px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  }
+  .hero-poster-placeholder{
+    width:100%;aspect-ratio:3/4;border-radius:12px;
+    border:2px dashed rgba(255,255,255,0.35);
+    display:flex;align-items:center;justify-content:center;
+    text-align:center;padding:24px;
+    font-family:'Inter',sans-serif;font-size:12px;color:rgba(255,255,255,0.55);
+    letter-spacing:.3px;line-height:1.6;
   }
   .hero-video{
     position:absolute;inset:0;width:100%;height:100%;
@@ -877,7 +896,7 @@
   }
   .hero-logo{
     width:60px;height:60px;border-radius:50%;object-fit:cover;
-    background:#fff;margin:0 auto 22px;display:block;
+    background:#fff;margin:0 0 22px;display:block;
     box-shadow:0 4px 18px rgba(0,0,0,0.35);position:relative;z-index:2;
   }
   .hero-eyebrow{
@@ -886,8 +905,8 @@
   }
   .hero h1{
     position:relative;z-index:2;font-family:'Fraunces',serif;font-weight:800;
-    font-size:clamp(36px,7.5vw,64px);line-height:1.1;margin-bottom:14px;
-    letter-spacing:.5px;max-width:820px;
+    font-size:clamp(32px,5.5vw,56px);line-height:1.1;margin-bottom:14px;
+    letter-spacing:.5px;max-width:none;
     text-shadow:0 4px 24px rgba(0,0,0,0.45);
   }
   .hero-tagline{
@@ -897,9 +916,9 @@
   }
   .hero p{
     position:relative;z-index:2;font-size:15.5px;line-height:1.6;color:rgba(255,255,255,0.9);
-    max-width:520px;margin:0 auto 34px;
+    max-width:520px;margin:0 0 34px;
   }
-  .hero-ctas{position:relative;z-index:2;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .hero-ctas{position:relative;z-index:2;display:flex;gap:16px;justify-content:flex-start;flex-wrap:wrap;}
   .hero-btn{
     appearance:none;cursor:pointer;
     font-family:'Inter',sans-serif;font-weight:700;font-size:13px;
@@ -1307,6 +1326,15 @@
     padding:14px 16px;font-size:12px;color:var(--ink-soft);line-height:1.6;
   }
 
+  @media (max-width:820px){
+    .hero{flex-direction:column;text-align:center;}
+    .hero-content{max-width:100%;}
+    .hero-ctas{justify-content:center;}
+    .hero p{margin:0 auto 34px;}
+    .hero-logo{margin:0 auto 22px;}
+    .hero-poster{max-width:300px;margin-top:12px;}
+  }
+
   @media (max-width:520px){
     .hero{padding:96px 18px 56px;min-height:560px;}
     .hero-btn{padding:14px 22px;font-size:12px;}
@@ -1464,14 +1492,21 @@
        exactly like a full-width agency landing header. -->
   <div class="hero">
     <video class="hero-video" id="heroVideo" autoplay muted loop playsinline></video>
-    <img class="hero-logo" id="homeLogo" alt="Cornerstone StudyWave logo">
-    <div class="hero-eyebrow">Pin Niri John Initiative</div>
-    <h1>CORNERSTONE STUDYWAVE</h1>
-    <div class="hero-tagline">&hellip;of a sure Foundation.</div>
-    <p>Empowering Nigerian secondary school students with sharp minds, knowledge and quality educational resources aligned to the national and international curricula.</p>
-    <div class="hero-ctas">
-      <button class="hero-btn hero-btn-primary" onclick="openResourcesModal()">Start Learning</button>
-      <button class="hero-btn hero-btn-secondary" onclick="showPage('page-quiz')">Register for Quiz</button>
+
+    <div class="hero-content">
+      <img class="hero-logo" id="homeLogo" alt="Cornerstone StudyWave logo">
+      <div class="hero-eyebrow">Pin Niri John Initiative</div>
+      <h1>CORNERSTONE STUDYWAVE</h1>
+      <div class="hero-tagline">&hellip;of a sure Foundation.</div>
+      <p>Empowering Nigerian secondary school students with sharp minds, knowledge and quality educational resources aligned to the national and international curricula.</p>
+      <div class="hero-ctas">
+        <button class="hero-btn hero-btn-primary" onclick="openResourcesModal()">Start Learning</button>
+        <button class="hero-btn hero-btn-secondary" onclick="showPage('page-quiz')">Register for Quiz</button>
+      </div>
+    </div>
+
+    <div class="hero-poster">
+      <img src="hero-poster-books.jpg" alt="Stack of colourful books topped with an open book, beside a globe and study notes">
     </div>
   </div>
 
