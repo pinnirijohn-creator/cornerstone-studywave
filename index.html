@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cornerstone Quiz Contest — Registration</title>
+<title>Cornerstone StudyWave — Registration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -806,8 +806,8 @@
     border-bottom:1px solid rgba(255,255,255,0.08);
   }
   .site-nav-inner{
-    max-width:1180px;margin:0 auto;
-    display:flex;align-items:center;gap:6px;
+    max-width:1400px;margin:0 auto;
+    display:flex;align-items:center;gap:3px;
     padding:0 20px;overflow-x:auto;
     scrollbar-width:none;
   }
@@ -825,8 +825,8 @@
   .nav-tab{
     appearance:none;border:none;background:transparent;cursor:pointer;
     color:rgba(255,255,255,0.78);font-family:'Inter',sans-serif;
-    font-weight:600;font-size:12px;letter-spacing:.6px;text-transform:uppercase;
-    padding:18px 14px;white-space:nowrap;
+    font-weight:600;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;
+    padding:14px 9px;white-space:nowrap;
     border-bottom:3px solid transparent;
     transition:var(--transition);flex-shrink:0;
   }
@@ -881,8 +881,8 @@
     box-shadow:0 4px 18px rgba(0,0,0,0.35);position:relative;z-index:2;
   }
   .hero-eyebrow{
-    position:relative;z-index:2;font-size:12px;letter-spacing:3px;text-transform:uppercase;
-    color:rgba(255,255,255,0.88);font-weight:600;margin-bottom:20px;
+    position:relative;z-index:2;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--gold-3);font-weight:600;margin-bottom:20px;
   }
   .hero h1{
     position:relative;z-index:2;font-family:'Fraunces',serif;font-weight:800;
@@ -1040,14 +1040,14 @@
   .nav-dropdown-trigger{
     appearance:none;border:none;background:transparent;cursor:pointer;
     color:rgba(255,255,255,0.78);font-family:'Inter',sans-serif;
-    font-weight:600;font-size:12px;letter-spacing:.6px;text-transform:uppercase;
-    padding:18px 14px;white-space:nowrap;display:flex;align-items:center;gap:5px;
+    font-weight:600;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;
+    padding:14px 9px;white-space:nowrap;display:flex;align-items:center;gap:4px;
     border-bottom:3px solid transparent;transition:var(--transition);
   }
   .nav-dropdown-trigger:hover{color:#fff;}
   .nav-dropdown-trigger.active{color:#fff;border-bottom-color:var(--gold-2);}
   .nav-dropdown-trigger .caret{
-    width:8px;height:8px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;
+    width:6px;height:6px;border-right:1.4px solid currentColor;border-bottom:1.4px solid currentColor;
     transform:rotate(45deg);margin-top:-3px;transition:transform var(--transition);
   }
   .nav-dropdown.open .nav-dropdown-trigger .caret{transform:rotate(-135deg);margin-top:3px;}
@@ -1404,8 +1404,8 @@
 <nav class="site-nav nav-transparent" id="siteNav">
   <div class="site-nav-inner">
     <div class="site-nav-brand">
-      <img id="navLogo" alt="Cornerstone Quiz Contest">
-      <span>Cornerstone Quiz Contest</span>
+      <img id="navLogo" alt="Cornerstone StudyWave">
+      <span>Cornerstone StudyWave</span>
     </div>
     <button class="nav-tab active" data-page="page-home" onclick="showPage('page-home')">Home</button>
     <div class="nav-dropdown" id="juniorNavDropdown">
@@ -1464,13 +1464,13 @@
        exactly like a full-width agency landing header. -->
   <div class="hero">
     <video class="hero-video" id="heroVideo" autoplay muted loop playsinline></video>
-    <img class="hero-logo" id="homeLogo" alt="Cornerstone Quiz Contest logo">
-    <div class="hero-eyebrow">Pin Niri John Initiative &middot; Heipang, Plateau State</div>
+    <img class="hero-logo" id="homeLogo" alt="Cornerstone StudyWave logo">
+    <div class="hero-eyebrow">Pin Niri John Initiative</div>
     <h1>CORNERSTONE STUDYWAVE</h1>
     <div class="hero-tagline">&hellip;of a sure Foundation.</div>
-    <p>A free academic community for SS2 &amp; SS3 students — built to sharpen minds, celebrate knowledge, and open doors through the Cornerstone Quiz Contest.</p>
+    <p>Empowering Nigerian secondary school students with sharp minds, knowledge and quality educational resources aligned to the national and international curricula.</p>
     <div class="hero-ctas">
-      <button class="hero-btn hero-btn-primary" onclick="showPage('page-junior')">Start Learning</button>
+      <button class="hero-btn hero-btn-primary" onclick="openResourcesModal()">Start Learning</button>
       <button class="hero-btn hero-btn-secondary" onclick="showPage('page-quiz')">Register for Quiz</button>
     </div>
   </div>
