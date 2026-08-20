@@ -1364,7 +1364,7 @@
   }
   .footer-col{min-width:0;}
   .footer-logo-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-  .footer-logo-img{width:61px;height:46px;object-fit:contain;flex-shrink:0;}
+  .footer-logo-img{width:60px;height:45px;object-fit:contain;flex-shrink:0;}
   .footer-logo-text{
     font-family:'Fraunces',serif;font-weight:700;font-size:16px;line-height:1.25;color:#fff;
   }
@@ -4163,9 +4163,9 @@ function buildConfirmationPdf(record, opts){
   doc.setFillColor(212, 160, 23);           // gold accent line only
   doc.rect(0, 32, 210, 1.2, 'F');
 
-  // Logo — top-left inside banner
+  // Logo — top-left inside banner (4:3 landscape)
   try{
-    doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 24, 24);
+    doc.addImage(LOGO_DATA_URL, 'PNG', 8, 7, 24, 18);
   }catch(e){ console.error('Could not add logo to PDF', e); }
 
   // QR code — top-right inside banner (white box so it's scannable)
@@ -4702,7 +4702,7 @@ function drawAnswerSheetPage(doc, record){
   } catch (e) { console.error('Could not add background to PDF', e); }
 
   // ── HEADER ───────────────────────────────────────────────────
-  try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 22, 22); }
+  try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 6.75, 22, 16.5); }
   catch (e) { console.error('Could not add logo to PDF', e); }
 
   // QR code — top-right, in a white box so it stays scannable over the watermark
@@ -4876,7 +4876,7 @@ function drawFrontCoverPage(doc, record){
   } catch (e) { console.error('Could not add background to PDF', e); }
 
   // ── HEADER ───────────────────────────────────────────────────
-  try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 4, 22, 22); }
+  try { doc.addImage(LOGO_DATA_URL, 'PNG', 8, 6.75, 22, 16.5); }
   catch (e) { console.error('Could not add logo to PDF', e); }
 
   doc.setFillColor(255, 255, 255);
@@ -5967,9 +5967,9 @@ function drawCertificatePage(doc, record){
   });
   doc.setDrawColor(0,0,0);
 
-  // ── HEADER: logo + titles ───────────────────────────────────
+  // ── HEADER: logo + titles (4:3 landscape) ─────────────────────
   try{
-    doc.addImage(LOGO_DATA_URL, 'PNG', W/2 - 12, 16, 24, 24);
+    doc.addImage(LOGO_DATA_URL, 'PNG', W/2 - 12, 19, 24, 18);
   }catch(e){ console.error('Could not add logo to certificate', e); }
 
   doc.setTextColor(26, 51, 112);
