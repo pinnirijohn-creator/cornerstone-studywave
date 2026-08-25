@@ -71,7 +71,12 @@
   /* ═══════════════════════════════════════════════════════════
      LAYOUT WRAPPER
   ═══════════════════════════════════════════════════════════ */
-  .wrap{max-width:700px;margin:0 auto;padding:32px 16px 20px;}
+  .wrap{max-width:700px;margin:0 auto;padding:32px 16px 20px;transition:max-width .25s ease;}
+  /* Registrar View needs the extra breathing room of a data table, so it
+     widens the shared .wrap container while it's open (toggled in
+     openQuizSection()/backToQuizMenu()) — every other view on this page
+     keeps the narrower 700px form width. */
+  .wrap.wide{max-width:1200px;}
 
   /* ═══════════════════════════════════════════════════════════
      HEADER / SEAL
@@ -3616,6 +3621,7 @@ function backToQuizMenu(){
   document.getElementById('quizStatusView').style.display = 'none';
   document.getElementById('quizAdminView').style.display = 'none';
   document.getElementById('continueLoginCard').style.display = 'none';
+  document.querySelector('#page-quiz .wrap').classList.remove('wide');
 }
 
 // ─── SAVE PROGRESS (server-side, resumable from any device) ───
@@ -3935,6 +3941,9 @@ function openQuizSection(section){
   document.getElementById('quizStatusView').style.display = 'none';
   document.getElementById('quizAdminView').style.display = 'none';
   document.getElementById('continueLoginCard').style.display = 'none';
+  // Only the Registrar View needs the wider layout (data table with many
+  // columns) — every other section keeps the normal narrow form width.
+  document.querySelector('#page-quiz .wrap').classList.toggle('wide', section === 'admin');
   const spFeedback = document.getElementById('saveProgressFeedback');
   spFeedback.style.display = '';
   spFeedback.textContent = '';
