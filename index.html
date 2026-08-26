@@ -4174,6 +4174,24 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 // { applicationId, surname, firstName, lastName, gender, dob, phone, email,
 //   guardianName, guardianPhone, address, school, levelLabel, fieldLabel, gradYear }
 // opts.returnBase64 = true → skip doc.save() and return the raw base64 string instead
+// Draws a smooth navy→gold horizontal gradient bar, replicating the fade
+// used on the "Candidate Review — Registrar Panel" header rule on screen
+// (var(--navy-2) → var(--gold-2)). Shared by the Confirmation Slip, Answer
+// Sheet, and Question Booklet Front Cover PDF headers.
+function drawGradientBar(doc, x, y, w, h, startColor, endColor, steps){
+  steps = steps || 60;
+  const stepW = w / steps;
+  for(let i = 0; i < steps; i++){
+    const t = i / (steps - 1);
+    const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * t);
+    const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * t);
+    const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * t);
+    doc.setFillColor(r, g, b);
+    // Slight overlap between strips avoids hairline gaps in the fade.
+    doc.rect(x + i * stepW, y, stepW + 0.1, h, 'F');
+  }
+}
+
 function buildConfirmationPdf(record, opts){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF(); // A4 portrait, 210 x 297 mm
@@ -4203,9 +4221,6 @@ function buildConfirmationPdf(record, opts){
   }catch(e){ console.error('Could not add background to PDF', e); }
 
   // ── HEADER BAND ─────────────────────────────────────────────
-  doc.setFillColor(212, 160, 23);           // gold accent line only
-  doc.rect(0, 32, 210, 1.2, 'F');
-
   // Logo — top-left inside banner (4:3 landscape)
   try{
     doc.addImage(getQuizContestLogoImage(), 'PNG', 8, 7, 24, 18);
@@ -4230,6 +4245,9 @@ function buildConfirmationPdf(record, opts){
   doc.setTextColor(0,0,0);
   doc.text('CANDIDATE REGISTRATION — CONFIRMATION SLIP', 105, 27, {align:'center'});
   doc.setTextColor(0,0,0);
+
+  // Navy-gold separator, smoothly fading like the Registrar Panel header rule
+  drawGradientBar(doc, 0, 32, 210, 1.2, [26, 51, 112], [212, 160, 23]);
 
   // ── APPLICATION ID BAND ─────────────────────────────────────
   doc.setFillColor(235, 240, 255);
@@ -4765,12 +4783,8 @@ function drawAnswerSheetPage(doc, record){
   doc.setFontSize(8);
   doc.text('Multiple Choice — shade or circle ONE option (A–E) per question   •   Time Allowed: 3 Hours', 105, 25, { align: 'center' });
 
-  // Navy-gold separator, echoing the on-screen header gradient
-  const sepY = 30, sepH = 1.3, sepSplit = 0.72;
-  doc.setFillColor(15, 33, 71);
-  doc.rect(0, sepY, 210 * sepSplit, sepH, 'F');
-  doc.setFillColor(212, 160, 23);
-  doc.rect(210 * sepSplit, sepY, 210 * (1 - sepSplit), sepH, 'F');
+  // Navy-gold separator, smoothly fading like the Registrar Panel header rule
+  drawGradientBar(doc, 0, 30, 210, 1.3, [26, 51, 112], [212, 160, 23]);
 
   // ── CANDIDATE INFO BAND ─────────────────────────────────────
   let y = 36;
@@ -4937,12 +4951,8 @@ function drawFrontCoverPage(doc, record){
   doc.setFontSize(8);
   doc.text(`${CONTEST_DATE}   •   ${CONTEST_VENUE}   •   ${CONTEST_TIME}`, 105, 25, { align: 'center' });
 
-  // Navy-gold separator, echoing the on-screen header gradient.
-  const sepY = 30, sepH = 1.3, sepSplit = 0.72;
-  doc.setFillColor(15, 33, 71);
-  doc.rect(0, sepY, 210 * sepSplit, sepH, 'F');
-  doc.setFillColor(212, 160, 23);
-  doc.rect(210 * sepSplit, sepY, 210 * (1 - sepSplit), sepH, 'F');
+  // Navy-gold separator, smoothly fading like the Registrar Panel header rule
+  drawGradientBar(doc, 0, 30, 210, 1.3, [26, 51, 112], [212, 160, 23]);
 
   // ── CANDIDATE INFO BAND ─────────────────────────────────────
   let y = 37;
